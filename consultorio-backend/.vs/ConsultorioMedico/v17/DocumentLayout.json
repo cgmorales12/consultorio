@@ -1,0 +1,117 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\WEB\\PI\\ConsultorioMedico\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\controllers\\pacientescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:controllers\\pacientescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\data\\consultoriodbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:data\\consultoriodbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\models\\pacientemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:models\\pacientemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\consultoriomedico.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:consultoriomedico.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "PacientesController.cs",
+              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Controllers\\PacientesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\PacientesController.cs",
+              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Controllers\\PacientesController.cs",
+              "RelativeToolTip": "Controllers\\PacientesController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOgAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-14T14:44:37.533Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-14T14:41:28.581Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-09-14T14:40:30.927Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ConsultorioDbContext.cs",
+              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Data\\ConsultorioDbContext.cs",
+              "RelativeDocumentMoniker": "Data\\ConsultorioDbContext.cs",
+              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Data\\ConsultorioDbContext.cs",
+              "RelativeToolTip": "Data\\ConsultorioDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-14T14:39:34.669Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PacienteModel.cs",
+              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Models\\PacienteModel.cs",
+              "RelativeDocumentMoniker": "Models\\PacienteModel.cs",
+              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Models\\PacienteModel.cs",
+              "RelativeToolTip": "Models\\PacienteModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-14T14:25:19.363Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ConsultorioMedico.csproj",
+              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\ConsultorioMedico.csproj",
+              "RelativeDocumentMoniker": "ConsultorioMedico.csproj",
+              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\ConsultorioMedico.csproj",
+              "RelativeToolTip": "ConsultorioMedico.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-09-14T14:21:17.45Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
