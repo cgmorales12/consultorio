@@ -1,5 +1,7 @@
 using ConsultorioMedico.API.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ConsultorioDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 23)) // Ajusta la versión según tu MAMP
+        new MySqlServerVersion(new Version(8, 0, 23)) // Ajusta la versiÃ³n segÃºn tu MAMP
     ));
 
 // Configurar CORS para permitir el frontend
@@ -28,13 +30,13 @@ builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Consultorio Médico Luz y Vida API",
+        Title = "Consultorio MÃ©dico Luz y Vida API",
         Version = "v1",
-        Description = "API para la gestión del Consultorio Médico Luz y Vida - Malchingui"
+        Description = "API para la gestiÃ³n del Consultorio MÃ©dico Luz y Vida - Malchingui"
     });
 });
 
@@ -44,10 +46,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.UseSwaggerUI(options =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Consultorio Luz y Vida API v1");
-        c.RoutePrefix = string.Empty; // Para que Swagger se abra en la raíz
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Consultorio Luz y Vida API v1");
+        options.RoutePrefix = string.Empty; // Para que Swagger se abra en la raÃ­z
     });
 }
 
