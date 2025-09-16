@@ -325,11 +325,9 @@ export class HistoriasClinicasComponent implements OnInit {
   }
 
   get historialConsultas(): ConsultaMedica[] {
-    if (!this.historiaSeleccionada) {
-      return [];
-    }
+    const consultas = this.historiaSeleccionada?.consultas ?? [];
 
-    return [...this.historiaSeleccionada.consultas].sort((a, b) =>
+    return [...consultas].sort((a, b) =>
       new Date(b.fechaConsulta).getTime() - new Date(a.fechaConsulta).getTime()
     );
   }

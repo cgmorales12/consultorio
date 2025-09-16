@@ -3420,11 +3420,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
+      "projectUniqueName": "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
       "projectName": "ConsultorioMedico",
-      "projectPath": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
+      "projectPath": "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
       "packagesPath": "C:\\Users\\CMG\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\obj\\",
+      "outputPath": "D:\\WEB\\PI\\consultorio-backend\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

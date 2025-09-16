@@ -21,7 +21,10 @@
         >
           <div class="historia-item__nombre">{{ historia.pacienteNombre }}</div>
           <div class="historia-item__info">
-            <span><i class="fas fa-calendar-check"></i> {{ historia.consultas.length }} consultas</span>
+            <span>
+              <i class="fas fa-calendar-check"></i>
+              {{ historia.consultas?.length ?? 0 }} consultas
+            </span>
             <span><i class="fas fa-clock"></i> {{ formatearFecha(historia.ultimaActualizacion) }}</span>
           </div>
         </button>
@@ -47,7 +50,7 @@
       </div>
       <div class="historia-stats">
         <div>
-          <span class="stat-value">{{ historia.consultas.length }}</span>
+          <span class="stat-value">{{ historia.consultas?.length ?? 0 }}</span>
           <span class="stat-label">Consultas registradas</span>
         </div>
         <div>
@@ -139,8 +142,8 @@
                 <h4>IMC</h4>
                 <p class="imc-valor">{{ consulta.imc ?? '—' }}</p>
                 <span class="imc-clasificacion">{{ consulta.clasificacionImc }}</span>
-                <div *ngIf="consulta.alertas.length > 0" class="alertas">
-                  <span *ngFor="let alerta of consulta.alertas" class="alerta">
+                <div *ngIf="(consulta.alertas?.length ?? 0) > 0" class="alertas">
+                  <span *ngFor="let alerta of (consulta.alertas ?? [])" class="alerta">
                     <i class="fas" [ngClass]="obtenerIconoAlerta(alerta)"></i>
                     {{ alerta }}
                   </span>
