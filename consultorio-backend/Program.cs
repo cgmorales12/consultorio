@@ -49,7 +49,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Consultorio Luz y Vida API v1");
-        options.RoutePrefix = string.Empty; // Para que Swagger se abra en la raíz
+        options.RoutePrefix = "swagger"; // Cambiado para usar /swagger
+        options.DefaultModelsExpandDepth(-1); // Ocultar modelos por defecto
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None); // Colapsar endpoints por defecto
     });
 }
 
@@ -57,16 +59,30 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
-app.UseAuthentication();
+// Nota: UseAuthentication() debe ir antes de UseAuthorization()
+// Si no tienes autenticación configurada, puedes comentar esta línea
+// app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 // Crear la base de datos si no existe
-using (var scope = app.Services.CreateScope())
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<ConsultorioDbContext>();
-    context.Database.EnsureCreated();
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ConsultorioDbContext>();
+        context.Database.EnsureCreated();
+        Console.WriteLine("Base de datos verificada/creada exitosamente.");
+    }
 }
+catch (Exception ex)
+{
+    Console.WriteLine($"Error al crear la base de datos: {ex.Message}");
+    // La aplicación continuará ejecutándose, pero sin base de datos
+}
+
+Console.WriteLine("Aplicación iniciada. Accede a Swagger en: https://localhost:7037/swagger");
 
 app.Run();

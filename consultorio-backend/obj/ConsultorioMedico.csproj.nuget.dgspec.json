@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj": {}
+    "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj": {}
   },
   "projects": {
-    "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj": {
+    "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
+        "projectUniqueName": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
         "projectName": "ConsultorioMedico",
-        "projectPath": "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
+        "projectPath": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
         "packagesPath": "C:\\Users\\CMG\\.nuget\\packages\\",
-        "outputPath": "D:\\WEB\\PI\\consultorio-backend\\obj\\",
+        "outputPath": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

@@ -1,29 +1,29 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\WEB\\PI\\ConsultorioMedico\\",
+  "WorkspaceRootPath": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|c:\\users\\cmg\\downloads\\pi\\consultorio-backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|c:\\users\\cmg\\downloads\\pi\\consultorio-backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\controllers\\pacientescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|c:\\users\\cmg\\downloads\\pi\\consultorio-backend\\controllers\\pacientescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:controllers\\pacientescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\data\\consultoriodbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|c:\\users\\cmg\\downloads\\pi\\consultorio-backend\\data\\consultoriodbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:data\\consultoriodbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\models\\pacientemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|c:\\users\\cmg\\downloads\\pi\\consultorio-backend\\models\\pacientemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:models\\pacientemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|d:\\web\\pi\\consultoriomedico\\consultoriomedico.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "AbsoluteMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|c:\\users\\cmg\\downloads\\pi\\consultorio-backend\\consultoriomedico.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
       "RelativeMoniker": "D:0:0:{DF16215F-6C0B-4304-8C99-A5FD7E0D0F5E}|ConsultorioMedico.csproj|solutionrelative:consultoriomedico.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     }
   ],
@@ -40,9 +40,9 @@
               "$type": "Document",
               "DocumentIndex": 2,
               "Title": "PacientesController.cs",
-              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Controllers\\PacientesController.cs",
+              "DocumentMoniker": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Controllers\\PacientesController.cs",
               "RelativeDocumentMoniker": "Controllers\\PacientesController.cs",
-              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Controllers\\PacientesController.cs",
+              "ToolTip": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Controllers\\PacientesController.cs",
               "RelativeToolTip": "Controllers\\PacientesController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAOgAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -52,11 +52,11 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Program.cs",
-              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Program.cs",
+              "DocumentMoniker": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Program.cs",
+              "ToolTip": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAvAAAAAAAAAA==",
+              "ViewState": "AgIAAEsAAAAAAAAAAAAAAFgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-14T14:41:28.581Z",
               "EditorCaption": ""
@@ -65,22 +65,21 @@
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "appsettings.json",
-              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\appsettings.json",
+              "DocumentMoniker": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\appsettings.json",
+              "ToolTip": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\appsettings.json",
               "RelativeToolTip": "appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-09-14T14:40:30.927Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-14T14:40:30.927Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
               "Title": "ConsultorioDbContext.cs",
-              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Data\\ConsultorioDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Data\\ConsultorioDbContext.cs",
               "RelativeDocumentMoniker": "Data\\ConsultorioDbContext.cs",
-              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Data\\ConsultorioDbContext.cs",
+              "ToolTip": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Data\\ConsultorioDbContext.cs",
               "RelativeToolTip": "Data\\ConsultorioDbContext.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAEQAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -90,9 +89,9 @@
               "$type": "Document",
               "DocumentIndex": 4,
               "Title": "PacienteModel.cs",
-              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\Models\\PacienteModel.cs",
+              "DocumentMoniker": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Models\\PacienteModel.cs",
               "RelativeDocumentMoniker": "Models\\PacienteModel.cs",
-              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\Models\\PacienteModel.cs",
+              "ToolTip": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\Models\\PacienteModel.cs",
               "RelativeToolTip": "Models\\PacienteModel.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -102,9 +101,9 @@
               "$type": "Document",
               "DocumentIndex": 5,
               "Title": "ConsultorioMedico.csproj",
-              "DocumentMoniker": "D:\\WEB\\PI\\ConsultorioMedico\\ConsultorioMedico.csproj",
+              "DocumentMoniker": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
               "RelativeDocumentMoniker": "ConsultorioMedico.csproj",
-              "ToolTip": "D:\\WEB\\PI\\ConsultorioMedico\\ConsultorioMedico.csproj",
+              "ToolTip": "C:\\Users\\CMG\\Downloads\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
               "RelativeToolTip": "ConsultorioMedico.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
