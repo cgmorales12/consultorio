@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "oaOgnhKg9P8=",
+  "dgSpecHash": "u9CafB0YAHM=",
   "success": true,
-  "projectFilePath": "D:\\WEB\\PI\\ConsultorioMedico\\ConsultorioMedico.csproj",
+  "projectFilePath": "D:\\WEB\\PI\\consultorio-backend\\ConsultorioMedico.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\CMG\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\CMG\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

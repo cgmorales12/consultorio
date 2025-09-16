@@ -1,0 +1,179 @@
+<div class="citas-container">
+  <header class="citas-header">
+    <div class="date-controls">
+      <button type="button" class="icon-button" (click)="changeDay(-1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <div class="date-details">
+        <span class="date-label">{{ selectedDateLabel }}</span>
+        <span class="week-label">Semana: {{ weekRangeLabel }}</span>
+      </div>
+      <button type="button" class="icon-button" (click)="changeDay(1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <input
+        class="date-picker"
+        type="date"
+        [value]="selectedDateInput"
+        (change)="onDateInputChange($event.target.value)"
+      />
+    </div>
+
+    <div class="view-switcher">
+      <button
+        type="button"
+        *ngFor="let option of viewOptions"
+        [class.active]="view === option.id"
+        (click)="setView(option.id)"
+      >
+        <i class="fas" [ngClass]="option.icon"></i>
+        <span>{{ option.label }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="stats" *ngIf="stats as resumen">
+    <div class="stat-card stat-card--total">
+      <div class="stat-title">Citas del día</div>
+      <div class="stat-value">{{ resumen.total }}</div>
+      <div class="stat-subtitle">{{ getDisponibilidadTexto() }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Programadas</div>
+      <div class="stat-value">{{ resumen.programadas }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Confirmadas</div>
+      <div class="stat-value">{{ resumen.confirmadas }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">En curso</div>
+      <div class="stat-value">{{ resumen.enCurso }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Completadas</div>
+      <div class="stat-value">{{ resumen.completadas }}</div>
+    </div>
+  </section>
+
+  <section class="available" *ngIf="view === 'agenda'">
+    <h3>Horarios disponibles</h3>
+    <ng-container *ngIf="availableSlots.length; else sinDisponibilidad">
+      <span class="slot-chip" *ngFor="let slot of availableSlots">{{ slot.start }} - {{ slot.end }}</span>
+    </ng-container>
+    <ng-template #sinDisponibilidad>
+      <p class="empty">Todos los bloques del día están ocupados.</p>
+    </ng-template>
+  </section>
+
+  <section class="view" *ngIf="view === 'agenda'">
+    <div *ngIf="loadingDaily" class="loader">Cargando agenda diaria...</div>
+    <table class="citas-table" *ngIf="!loadingDaily">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Paciente</th>
+          <th>Motivo</th>
+          <th>Estado</th>
+          <th>Acciones rápidas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cita of dailyAppointments; trackBy: trackByCita">
+          <td>
+            <div class="time-range">
+              <span>{{ cita.horaInicio }}</span>
+              <span class="separator">→</span>
+              <span>{{ cita.horaFin }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="paciente">
+              <strong>{{ cita.pacienteNombre || 'Paciente sin nombre' }}</strong>
+              <small>#{{ cita.pacienteId }}</small>
+            </div>
+          </td>
+          <td>
+            <div class="motivo">{{ cita.motivo || 'Sin motivo registrado' }}</div>
+            <small class="notas" *ngIf="cita.notas">{{ cita.notas }}</small>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getEstadoClase(cita.estado)">{{ cita.estado }}</span>
+          </td>
+          <td>
+            <div class="acciones">
+              <button
+                type="button"
+                class="action-button"
+                *ngFor="let action of getActions(cita)"
+                [disabled]="isUpdating(cita.citaId)"
+                [ngClass]="'action-button--' + action.theme"
+                (click)="executeAction(cita, action)"
+              >
+                <i class="fas" [ngClass]="action.icon"></i>
+                <span>{{ action.label }}</span>
+              </button>
+              <span class="action-loading" *ngIf="isUpdating(cita.citaId)">
+                <i class="fas fa-spinner fa-spin"></i>
+              </span>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="!dailyAppointments.length">
+          <td colspan="5" class="empty">No hay citas registradas para este día.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="view" *ngIf="view === 'semana'">
+    <div *ngIf="loadingWeekly" class="loader">Cargando calendario semanal...</div>
+    <div class="week-grid" *ngIf="!loadingWeekly">
+      <div class="day-card" *ngFor="let dia of weeklyAgenda">
+        <header>
+          <span class="day-name">{{ dia.dia }}</span>
+          <span class="day-date">{{ dia.fecha | date: 'dd/MM' }}</span>
+        </header>
+        <ul *ngIf="dia.citas.length; else diaVacio">
+          <li *ngFor="let cita of dia.citas; trackBy: trackByCita">
+            <div class="time">{{ cita.horaInicio }} - {{ cita.horaFin }}</div>
+            <div class="info">
+              <div class="name">{{ cita.pacienteNombre || 'Paciente sin nombre' }}</div>
+              <div class="state badge" [ngClass]="getEstadoClase(cita.estado)">{{ cita.estado }}</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <ng-template #diaVacio>
+        <p class="empty">Sin citas para este día.</p>
+      </ng-template>
+    </div>
+  </section>
+
+  <section class="view" *ngIf="view === 'lista'">
+    <div *ngIf="loadingList" class="loader">Cargando lista completa...</div>
+    <table class="citas-table" *ngIf="!loadingList">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Paciente</th>
+          <th>Motivo</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cita of allAppointments; trackBy: trackByCita">
+          <td>{{ cita.fecha | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ cita.horaInicio }} - {{ cita.horaFin }}</td>
+          <td>{{ cita.pacienteNombre || ('Paciente #' + cita.pacienteId) }}</td>
+          <td>{{ cita.motivo || 'Sin motivo' }}</td>
+          <td><span class="badge" [ngClass]="getEstadoClase(cita.estado)">{{ cita.estado }}</span></td>
+        </tr>
+        <tr *ngIf="!allAppointments.length">
+          <td colspan="5" class="empty">No hay citas registradas.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>

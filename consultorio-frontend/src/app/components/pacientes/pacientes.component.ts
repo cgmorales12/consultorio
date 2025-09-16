@@ -1,22 +1,26 @@
 // src/app/components/pacientes/pacientes.component.ts
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PacientesService } from '../../services/pacientes.service';
 import { Paciente } from '../../models/paciente.model';
 
 @Component({
   selector: 'app-pacientes',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './pacientes.component.html',
   styleUrls: ['./pacientes.component.css']
 })
 export class PacientesComponent implements OnInit {
   // Propiedades del componente
-  formularioPaciente: FormGroup;
+  formularioPaciente!: FormGroup;
   mostrarFormulario = false;
   pacienteSeleccionado: Paciente | null = null;
   terminoBusqueda = '';
   pacientesFiltrados: Paciente[] = [];
   cargando = false;
+  maxFechaNacimiento = new Date().toISOString().split('T')[0];
 
   constructor(
     private fb: FormBuilder,

@@ -1,16 +1,13 @@
 // src/app/app-routing.module.ts
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { PacientesComponent } from './components/pacientes/pacientes.component';
+import { CitasComponent } from './components/citas/citas.component';
+import { HistoriasClinicasComponent } from './components/historias-clinicas/historias-clinicas.component';
 
-const routes: Routes = [
-  { path: '', redirectTo: '/pacientes', pathMatch: 'full' },
+export const routes: Routes = [
+  { path: '', redirectTo: '/citas', pathMatch: 'full' },
+  { path: 'citas', component: CitasComponent },
   { path: 'pacientes', component: PacientesComponent },
-  { path: '**', redirectTo: '/pacientes' } // Ruta comodín para 404
+  { path: 'historias-clinicas', component: HistoriasClinicasComponent },
+  { path: '**', redirectTo: '/citas' }
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }

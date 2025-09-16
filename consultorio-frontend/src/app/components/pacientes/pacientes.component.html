@@ -102,7 +102,7 @@
                 id="fechaNacimiento"
                 formControlName="fechaNacimiento"
                 class="form-control"
-                [max]="new Date().toISOString().split('T')[0]"
+                [max]="maxFechaNacimiento"
               >
             </div>
 
@@ -312,4 +312,45 @@
 
           <!-- Alertas médicas -->
           <div class="medical-alerts" *ngIf="paciente.alergias?.length || paciente.enfermedadesCronicas?.length">
-            <span class="alert-badge allergy" *ngIf="paciente.alergias?.length" [title]="paciente.alergias?.join
+            <span
+              class="alert-badge allergy"
+              *ngIf="paciente.alergias?.length"
+              [title]="paciente.alergias?.join(', ')"
+            >
+              <i class="fas fa-allergies"></i>
+              Alergias
+            </span>
+            <span
+              class="alert-badge condition"
+              *ngIf="paciente.enfermedadesCronicas?.length"
+              [title]="paciente.enfermedadesCronicas?.join(', ')"
+            >
+              <i class="fas fa-notes-medical"></i>
+              Condiciones crónicas
+            </span>
+          </div>
+
+          <div class="patient-actions">
+            <button type="button" class="btn btn-outline-primary" (click)="editarPaciente(paciente)">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-danger"
+              (click)="eliminarPaciente(paciente.id, paciente.nombres + ' ' + paciente.apellidos)"
+            >
+              <i class="fas fa-trash"></i>
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!cargando && pacientesFiltrados.length === 0">
+      <i class="fas fa-user-plus"></i>
+      <p>No se encontraron pacientes. Registra uno nuevo para comenzar.</p>
+    </div>
+  </div>
+</div>
