@@ -1,121 +1,115 @@
 // src/app/services/pacientes.service.ts
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Paciente } from '../models/paciente.model';
+import { environment } from '../config/environment';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message: string;
+  total?: number;
+}
+
+interface PacienteApi {
+  pacienteId: number;
+  cedula: string;
+  nombres: string;
+  apellidos: string;
+  fechaNacimiento: string;
+  genero: string;
+  direccion?: string;
+  telefono?: string;
+  celular?: string;
+  email?: string;
+  estadoCivil?: string;
+  ocupacion?: string;
+  contactoEmergencia?: string;
+  telefonoEmergencia?: string;
+  tipoSangre?: string;
+  alergias?: string;
+  estado: boolean;
+  fechaRegistro?: string;
+}
+
+type PacientePayload = Omit<PacienteApi, 'pacienteId' | 'fechaRegistro'> & {
+  pacienteId?: number;
+  fechaRegistro?: string;
+};
 
 @Injectable({
   providedIn: 'root'
 })
 export class PacientesService {
-  private pacientesSubject = new BehaviorSubject<Paciente[]>([]);
-  public pacientes$ = this.pacientesSubject.asObservable();
+  private readonly baseUrl = `${environment.apiUrl.replace(/\/$/, '')}/api/Pacientes`;
 
-  constructor() {
-    // Cargar datos de ejemplo
-    this.cargarDatosEjemplo();
-  }
+  constructor(private readonly http: HttpClient) {}
 
-  private cargarDatosEjemplo(): void {
-    const pacientesEjemplo: Paciente[] = [
-      {
-        id: '1',
-        cedula: '1717123456',
-        nombres: 'María José',
-        apellidos: 'González Pérez',
-        fechaNacimiento: new Date('1985-03-15'),
-        edad: 39,
-        genero: 'F',
-        telefono: '0987654321',
-        email: 'maria.gonzalez@email.com',
-        direccion: 'Malchinguí, Calle Principal 123',
-        estadoCivil: 'Casada',
-        ocupacion: 'Profesora',
-        contactoEmergencia: {
-          nombre: 'Carlos González',
-          telefono: '0987654322',
-          relacion: 'Esposo'
-        },
-        alergias: ['Penicilina'],
-        medicamentosActuales: ['Omeprazol 20mg'],
-        fechaRegistro: new Date(),
-        activo: true
-      }
-    ];
-    this.pacientesSubject.next(pacientesEjemplo);
-  }
-
-  // Obtener todos los pacientes
   obtenerTodos(): Observable<Paciente[]> {
-    return this.pacientes$;
-  }
-
-  // Obtener paciente por ID
-  obtenerPorId(id: string): Observable<Paciente | undefined> {
-    const pacientes = this.pacientesSubject.value;
-    return of(pacientes.find(p => p.id === id));
-  }
-
-  // Buscar pacientes
-  buscarPacientes(termino: string): Observable<Paciente[]> {
-    const pacientes = this.pacientesSubject.value;
-    const resultado = pacientes.filter(paciente =>
-      paciente.nombres.toLowerCase().includes(termino.toLowerCase()) ||
-      paciente.apellidos.toLowerCase().includes(termino.toLowerCase()) ||
-      paciente.cedula.includes(termino)
+    return this.http.get<ApiResponse<PacienteApi[]>>(this.baseUrl).pipe(
+      map(response => (response.data ?? []).map(api => this.mapFromApi(api)))
     );
-    return of(resultado);
   }
 
-  // Agregar nuevo paciente
+  obtenerPorId(id: number): Observable<Paciente | undefined> {
+    return this.http.get<ApiResponse<PacienteApi>>(`${this.baseUrl}/${id}`).pipe(
+      map(response => (response.data ? this.mapFromApi(response.data) : undefined))
+    );
+  }
+
+  buscarPacientes(termino: string): Observable<Paciente[]> {
+    const normalizado = termino.trim().toLowerCase();
+    if (!normalizado) {
+      return this.obtenerTodos();
+    }
+
+    return this.obtenerTodos().pipe(
+      map(pacientes =>
+        pacientes.filter(paciente =>
+          paciente.nombres.toLowerCase().includes(normalizado) ||
+          paciente.apellidos.toLowerCase().includes(normalizado) ||
+          paciente.cedula.includes(termino)
+        )
+      )
+    );
+  }
+
   agregarPaciente(paciente: Paciente): Observable<Paciente> {
-    const pacientes = this.pacientesSubject.value;
-    paciente.id = this.generarId();
-    paciente.fechaRegistro = new Date();
-    paciente.edad = this.calcularEdad(paciente.fechaNacimiento);
-    
-    const nuevosPacientes = [...pacientes, paciente];
-    this.pacientesSubject.next(nuevosPacientes);
-    
-    return of(paciente);
+    const payload = this.mapToPayload(paciente);
+    return this.http.post<ApiResponse<PacienteApi>>(this.baseUrl, payload).pipe(
+      map(response => {
+        if (!response.data) {
+          throw new Error(response.message || 'No se pudo crear el paciente');
+        }
+        return this.mapFromApi(response.data);
+      })
+    );
   }
 
-  // Actualizar paciente
-  actualizarPaciente(paciente: Paciente): Observable<Paciente> {
-    const pacientes = this.pacientesSubject.value;
-    const indice = pacientes.findIndex(p => p.id === paciente.id);
-    
-    if (indice !== -1) {
-      paciente.edad = this.calcularEdad(paciente.fechaNacimiento);
-      pacientes[indice] = { ...paciente };
-      this.pacientesSubject.next([...pacientes]);
+  actualizarPaciente(paciente: Paciente): Observable<void> {
+    if (!paciente.id) {
+      throw new Error('El ID del paciente es requerido para actualizar');
     }
-    
-    return of(paciente);
+
+    const payload = this.mapToPayload(paciente, true);
+    return this.http.put<ApiResponse<unknown>>(`${this.baseUrl}/${paciente.id}`, payload).pipe(map(() => void 0));
   }
 
-  // Eliminar paciente (marcar como inactivo)
-  eliminarPaciente(id: string): Observable<boolean> {
-    const pacientes = this.pacientesSubject.value;
-    const indice = pacientes.findIndex(p => p.id === id);
-    
-    if (indice !== -1) {
-      pacientes[indice].activo = false;
-      this.pacientesSubject.next([...pacientes]);
-      return of(true);
-    }
-    
-    return of(false);
+  eliminarPaciente(id: number): Observable<boolean> {
+    return this.http.delete<ApiResponse<unknown>>(`${this.baseUrl}/${id}`).pipe(
+      map(response => response.success)
+    );
   }
 
-  // Validar cédula ecuatoriana
   validarCedulaEcuatoriana(cedula: string): boolean {
     if (cedula.length !== 10) return false;
-    
+
     const digitos = cedula.split('').map(Number);
-    const provincia = parseInt(cedula.substring(0, 2));
-    
+    const provincia = parseInt(cedula.substring(0, 2), 10);
+
     if (provincia < 1 || provincia > 24) return false;
-    
+
     let suma = 0;
     for (let i = 0; i < 9; i++) {
       let digito = digitos[i];
@@ -125,14 +119,130 @@ export class PacientesService {
       }
       suma += digito;
     }
-    
+
     const digitoVerificador = 10 - (suma % 10);
     return digitoVerificador === digitos[9] || (digitoVerificador === 10 && digitos[9] === 0);
   }
 
-  // Métodos privados
-  private generarId(): string {
-    return Math.random().toString(36).substr(2, 9);
+  private mapFromApi(api: PacienteApi): Paciente {
+    const fechaNacimiento = new Date(api.fechaNacimiento);
+    const fechaRegistro = api.fechaRegistro ? new Date(api.fechaRegistro) : undefined;
+    const contactoEmergencia = this.parseContactoEmergencia(api.contactoEmergencia, api.telefonoEmergencia);
+
+    return {
+      id: api.pacienteId,
+      cedula: api.cedula,
+      nombres: api.nombres,
+      apellidos: api.apellidos,
+      nombreCompleto: `${api.nombres} ${api.apellidos}`.trim(),
+      fechaNacimiento,
+      edad: this.calcularEdad(fechaNacimiento),
+      genero: this.normalizarGenero(api.genero),
+      telefono: api.telefono ?? undefined,
+      celular: api.celular ?? undefined,
+      email: api.email ?? undefined,
+      direccion: api.direccion ?? undefined,
+      estadoCivil: api.estadoCivil ?? undefined,
+      ocupacion: api.ocupacion ?? undefined,
+      contactoEmergencia,
+      tipoSangre: api.tipoSangre ?? undefined,
+      alergias: this.parseLista(api.alergias),
+      medicamentosActuales: [],
+      enfermedadesCronicas: [],
+      fechaRegistro,
+      activo: api.estado
+    };
+  }
+
+  private mapToPayload(paciente: Paciente, includeId = false): PacientePayload {
+    const fechaNacimiento = paciente.fechaNacimiento instanceof Date
+      ? paciente.fechaNacimiento.toISOString()
+      : new Date(paciente.fechaNacimiento).toISOString();
+
+    const contacto = paciente.contactoEmergencia?.nombre ?? '';
+    const relacion = paciente.contactoEmergencia?.relacion?.trim();
+    const contactoEmergencia = relacion ? `${contacto} (${relacion})` : contacto;
+
+    return {
+      ...(includeId && paciente.id ? { pacienteId: paciente.id } : {}),
+      cedula: paciente.cedula,
+      nombres: paciente.nombres,
+      apellidos: paciente.apellidos,
+      fechaNacimiento,
+      genero: paciente.genero,
+      direccion: paciente.direccion,
+      telefono: paciente.telefono,
+      celular: paciente.celular,
+      email: paciente.email,
+      estadoCivil: paciente.estadoCivil,
+      ocupacion: paciente.ocupacion,
+      contactoEmergencia: contactoEmergencia || undefined,
+      telefonoEmergencia: paciente.contactoEmergencia?.telefono,
+      tipoSangre: paciente.tipoSangre,
+      alergias: this.stringifyLista(paciente.alergias),
+      estado: paciente.activo,
+      fechaRegistro: paciente.fechaRegistro?.toISOString()
+    };
+  }
+
+  private parseContactoEmergencia(nombre?: string, telefono?: string): Paciente['contactoEmergencia'] | undefined {
+    if (!nombre && !telefono) {
+      return undefined;
+    }
+
+    let contactoNombre = nombre?.trim() ?? '';
+    let relacion: string | undefined;
+
+    if (contactoNombre.includes('(') && contactoNombre.includes(')')) {
+      const regex = /^(.*)\((.*)\)$/;
+      const match = contactoNombre.match(regex);
+      if (match) {
+        contactoNombre = match[1].trim();
+        relacion = match[2].trim();
+      }
+    }
+
+    return {
+      ...(contactoNombre ? { nombre: contactoNombre } : {}),
+      ...(telefono ? { telefono } : {}),
+      ...(relacion ? { relacion } : {})
+    };
+  }
+
+  private parseLista(valor?: string): string[] {
+    if (!valor) {
+      return [];
+    }
+
+    return valor
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  }
+
+  private stringifyLista(valores?: string[]): string | undefined {
+    if (!valores || valores.length === 0) {
+      return undefined;
+    }
+
+    return valores.map(valor => valor.trim()).filter(valor => valor.length > 0).join(', ');
+  }
+
+  private normalizarGenero(genero?: string): Paciente['genero'] {
+    if (!genero) {
+      return 'Otro';
+    }
+
+    const valor = genero.trim().toUpperCase();
+    if (valor.startsWith('M')) {
+      return 'M';
+    }
+
+    if (valor.startsWith('F')) {
+      return 'F';
+    }
+
+    return 'Otro';
   }
 
   private calcularEdad(fechaNacimiento: Date): number {
@@ -141,11 +251,11 @@ export class PacientesService {
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
     const mesActual = hoy.getMonth();
     const mesNacimiento = nacimiento.getMonth();
-    
+
     if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())) {
       edad--;
     }
-    
+
     return edad;
   }
 }

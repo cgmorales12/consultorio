@@ -4,7 +4,8 @@ import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } 
 import { finalize, distinctUntilChanged } from 'rxjs/operators';
 import { HistoriasClinicasService } from '../../services/historias-clinicas.service';
 import { ConsultaMedica, HistoriaClinica, PlantillaConsulta } from '../../models/historia-clinica.model';
-import { PacientesService as PacientesApiService, Paciente as PacienteApi } from '../../services/pacientes';
+import { PacientesService } from '../../services/pacientes.service';
+import { Paciente } from '../../models/paciente.model';
 
 @Component({
   selector: 'app-historias-clinicas',
@@ -29,14 +30,14 @@ export class HistoriasClinicasComponent implements OnInit {
   guardandoConsulta = false;
   creandoHistoria = false;
   mensajeError?: string;
-  pacientes: PacienteApi[] = [];
+  pacientes: Paciente[] = [];
   pacienteControl = new FormControl<number | null>(null);
   pacienteFiltradoId: number | null = null;
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly historiasService: HistoriasClinicasService,
-    private readonly pacientesService: PacientesApiService
+    private readonly pacientesService: PacientesService
   ) {
     this.antecedentesForm = this.fb.group({
       antecedentesPersonales: [''],
@@ -130,12 +131,11 @@ export class HistoriasClinicasComponent implements OnInit {
 
   cargarPacientes(): void {
     this.cargandoPacientes = true;
-    this.pacientesService.obtenerPacientes()
+    this.pacientesService.obtenerTodos()
       .pipe(finalize(() => (this.cargandoPacientes = false)))
       .subscribe({
-        next: (response) => {
-          const data = Array.isArray(response.data) ? (response.data as PacienteApi[]) : [];
-          this.pacientes = data;
+        next: (pacientes) => {
+          this.pacientes = pacientes;
         },
         error: (error) => {
           console.error('No se pudieron cargar los pacientes', error);

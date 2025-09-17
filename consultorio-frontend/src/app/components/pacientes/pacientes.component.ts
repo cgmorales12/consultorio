@@ -128,15 +128,14 @@ export class PacientesComponent implements OnInit {
       const contactoEmergencia = this.obtenerContactoEmergencia(formData);
 
       const paciente: Paciente = {
-        id: this.pacienteSeleccionado?.id || '',
+        ...(this.pacienteSeleccionado?.id ? { id: this.pacienteSeleccionado.id } : {}),
         cedula: formData.cedula,
         nombres: formData.nombres,
         apellidos: formData.apellidos,
         fechaNacimiento: new Date(formData.fechaNacimiento),
-        edad: 0, // Se calcula automáticamente en el servicio
+        edad: 0, // Se recalcula al recibir la respuesta del servicio
         genero: formData.genero,
         telefono: formData.telefono,
-        email: formData.email,
         direccion: formData.direccion,
         estadoCivil: formData.estadoCivil,
         ocupacion: formData.ocupacion,
@@ -145,31 +144,46 @@ export class PacientesComponent implements OnInit {
         medicamentosActuales: formData.medicamentosActuales ? formData.medicamentosActuales.split(',').map((m: string) => m.trim()) : [],
         enfermedadesCronicas: formData.enfermedadesCronicas ? formData.enfermedadesCronicas.split(',').map((e: string) => e.trim()) : [],
         fechaRegistro: this.pacienteSeleccionado?.fechaRegistro || new Date(),
-        activo: true
+        activo: this.pacienteSeleccionado?.activo ?? true,
+        email: formData.email
       };
 
-      const operacion = this.pacienteSeleccionado ? 
-        this.pacientesService.actualizarPaciente(paciente) : 
-        this.pacientesService.agregarPaciente(paciente);
-
-      operacion.subscribe({
-        next: () => {
-          this.cerrarFormulario();
-          this.cargarPacientes();
-          alert(this.pacienteSeleccionado ? 'Paciente actualizado correctamente' : 'Paciente registrado correctamente');
-        },
-        error: (error) => {
-          console.error('Error al guardar paciente:', error);
-          alert('Error al guardar el paciente');
-        }
-      });
+      if (this.pacienteSeleccionado) {
+        this.pacientesService.actualizarPaciente(paciente).subscribe({
+          next: () => {
+            this.cerrarFormulario();
+            this.cargarPacientes();
+            alert('Paciente actualizado correctamente');
+          },
+          error: (error: unknown) => {
+            console.error('Error al guardar paciente:', error);
+            alert('Error al guardar el paciente');
+          }
+        });
+      } else {
+        this.pacientesService.agregarPaciente(paciente).subscribe({
+          next: () => {
+            this.cerrarFormulario();
+            this.cargarPacientes();
+            alert('Paciente registrado correctamente');
+          },
+          error: (error: unknown) => {
+            console.error('Error al guardar paciente:', error);
+            alert('Error al guardar el paciente');
+          }
+        });
+      }
     } else {
       alert('Por favor, complete todos los campos requeridos');
     }
   }
 
   // Eliminar paciente
-  eliminarPaciente(id: string, nombreCompleto: string): void {
+  eliminarPaciente(id: number | undefined, nombreCompleto: string): void {
+    if (!id) {
+      alert('No se encontró el identificador del paciente');
+      return;
+    }
     if (confirm(`¿Está seguro de eliminar al paciente ${nombreCompleto}?`)) {
       this.pacientesService.eliminarPaciente(id).subscribe({
         next: (eliminado) => {

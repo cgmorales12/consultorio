@@ -55,7 +55,7 @@
           Selecciona un paciente
           <select formControlName="pacienteId" [disabled]="cargandoPacientes">
             <option [ngValue]="null">Selecciona un paciente</option>
-            <option *ngFor="let paciente of pacientes" [ngValue]="paciente.pacienteId">
+            <option *ngFor="let paciente of pacientes" [ngValue]="paciente.id ?? null">
               {{ paciente.nombreCompleto || (paciente.nombres + ' ' + paciente.apellidos) }}
             </option>
           </select>

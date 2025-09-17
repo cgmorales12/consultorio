@@ -1,26 +1,28 @@
 // src/app/models/paciente.model.ts
 export interface Paciente {
-  id: string;
+  id?: number;
   cedula: string;
   nombres: string;
   apellidos: string;
   fechaNacimiento: Date;
   edad: number;
-  genero: 'M' | 'F';
-  telefono: string;
+  genero: 'M' | 'F' | 'Otro';
+  telefono?: string;
+  celular?: string;
   email?: string;
-  direccion: string;
-  estadoCivil: string;
+  direccion?: string;
+  estadoCivil?: string;
   ocupacion?: string;
   contactoEmergencia?: {
     nombre?: string;
     telefono?: string;
     relacion?: string;
   };
-  seguroMedico?: string;
+  tipoSangre?: string;
   alergias?: string[];
   medicamentosActuales?: string[];
   enfermedadesCronicas?: string[];
-  fechaRegistro: Date;
+  fechaRegistro?: Date;
   activo: boolean;
+  nombreCompleto?: string;
 }

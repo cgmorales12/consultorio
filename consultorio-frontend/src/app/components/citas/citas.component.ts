@@ -5,7 +5,8 @@ import { Observable, Subject, interval } from 'rxjs';
 import { finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AgendaSemanalDia, Cita, CitaPayload, DailyStats, EstadoCita } from '../../models/cita.model';
 import { CitasService } from '../../services/citas.service';
-import { PacientesService as PacientesApiService, Paciente as PacienteApi } from '../../services/pacientes';
+import { PacientesService } from '../../services/pacientes.service';
+import { Paciente } from '../../models/paciente.model';
 
 type VistaCitas = 'agenda' | 'semana' | 'lista';
 
@@ -52,7 +53,7 @@ export class CitasComponent implements OnInit, OnDestroy {
   mensajeCitaExito?: string;
   mensajeCitaError?: string;
   citaForm: FormGroup;
-  pacientes: PacienteApi[] = [];
+  pacientes: Paciente[] = [];
 
   private readonly destroy$ = new Subject<void>();
   private readonly workRanges = [
@@ -63,7 +64,7 @@ export class CitasComponent implements OnInit, OnDestroy {
   constructor(
     private readonly citasService: CitasService,
     private readonly fb: FormBuilder,
-    private readonly pacientesService: PacientesApiService
+    private readonly pacientesService: PacientesService
   ) {
     this.citaForm = this.crearFormularioCita();
   }
@@ -237,22 +238,17 @@ export class CitasComponent implements OnInit, OnDestroy {
     this.cargandoPacientes = true;
     const pacienteActual = this.citaForm?.get('pacienteId')?.value as number | null;
 
-    this.pacientesService.obtenerPacientes()
+    this.pacientesService.obtenerTodos()
       .pipe(finalize(() => (this.cargandoPacientes = false)))
       .subscribe({
-        next: response => {
-          if (response.success && Array.isArray(response.data)) {
-            this.pacientes = response.data as PacienteApi[];
-          } else {
-            this.pacientes = [];
-          }
-
+        next: pacientes => {
+          this.pacientes = pacientes;
           const control = this.citaForm.get('pacienteId');
           if (seleccionarId) {
             control?.setValue(seleccionarId, { emitEvent: false });
             control?.updateValueAndValidity({ emitEvent: false });
           } else if (pacienteActual) {
-            const existe = this.pacientes.some(p => p.pacienteId === pacienteActual);
+            const existe = this.pacientes.some(p => (p.id ?? null) === pacienteActual);
             control?.setValue(existe ? pacienteActual : null, { emitEvent: false });
             control?.updateValueAndValidity({ emitEvent: false });
           }
@@ -292,25 +288,26 @@ export class CitasComponent implements OnInit, OnDestroy {
       solicitud$ = this.citasService.create(this.crearPayloadCita(valores.pacienteId, valores));
     } else {
       const nuevoPaciente = this.nuevoPacienteForm.getRawValue();
-      const nuevoPacientePayload: Partial<PacienteApi> = {
+      const pacienteParaCrear: Paciente = {
         cedula: nuevoPaciente.cedula,
         nombres: nuevoPaciente.nombres,
         apellidos: nuevoPaciente.apellidos,
-        fechaNacimiento: nuevoPaciente.fechaNacimiento,
-        genero: nuevoPaciente.genero,
+        fechaNacimiento: new Date(nuevoPaciente.fechaNacimiento),
+        edad: 0,
+        genero: (nuevoPaciente.genero ?? 'Otro') as Paciente['genero'],
         telefono: nuevoPaciente.telefono ? nuevoPaciente.telefono : undefined,
-        email: nuevoPaciente.email ? nuevoPaciente.email : undefined
+        email: nuevoPaciente.email ? nuevoPaciente.email : undefined,
+        activo: true
       };
 
-      solicitud$ = this.pacientesService.crearPaciente(nuevoPacientePayload).pipe(
-        switchMap(response => {
-          const pacienteCreado = response.success ? (response.data as PacienteApi) : undefined;
-          if (!pacienteCreado?.pacienteId) {
+      solicitud$ = this.pacientesService.agregarPaciente(pacienteParaCrear).pipe(
+        switchMap(pacienteCreado => {
+          if (!pacienteCreado.id) {
             throw new Error('No se pudo crear el paciente');
           }
-          nuevoPacienteId = pacienteCreado.pacienteId;
-          return this.citasService.create(this.crearPayloadCita(pacienteCreado.pacienteId, valores)).pipe(
-            tap(() => this.cargarPacientes(pacienteCreado.pacienteId))
+          nuevoPacienteId = pacienteCreado.id;
+          return this.citasService.create(this.crearPayloadCita(pacienteCreado.id, valores)).pipe(
+            tap(() => this.cargarPacientes(pacienteCreado.id))
           );
         })
       );
