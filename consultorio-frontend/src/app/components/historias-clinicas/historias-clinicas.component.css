@@ -280,6 +280,25 @@ label {
   color: #374151;
 }
 
+/* Estilos visuales para resaltar los campos obligatorios con asterisco rojo. */
+.required-field .label-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.required-asterisk {
+  color: #e02424;
+  font-weight: 700;
+}
+
+.mensaje-plantillas {
+  margin-top: -0.1rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #b55300;
+}
+
 input,
 textarea,
 select {

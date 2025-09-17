@@ -158,7 +158,13 @@ namespace ConsultorioMedico.API.Controllers
 
             ActualizarParametrosClinicos(consulta);
 
+            if (historia.Consultas == null)
+            {
+                historia.Consultas = new List<ConsultaMedicaModel>();
+            }
+
             historia.Consultas.Add(consulta);
+            _context.ConsultasMedicas.Add(consulta);
             historia.UltimaActualizacion = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -243,6 +249,8 @@ namespace ConsultorioMedico.API.Controllers
 
         private static HistoriaClinicaDto MapHistoriaClinica(HistoriaClinicaModel historia)
         {
+            var consultas = historia.Consultas ?? Enumerable.Empty<ConsultaMedicaModel>();
+
             return new HistoriaClinicaDto
             {
                 HistoriaClinicaId = historia.HistoriaClinicaId,
@@ -254,7 +262,7 @@ namespace ConsultorioMedico.API.Controllers
                 Alergias = historia.Alergias,
                 FechaCreacion = historia.FechaCreacion,
                 UltimaActualizacion = historia.UltimaActualizacion,
-                Consultas = historia.Consultas
+                Consultas = consultas
                     .OrderByDescending(c => c.FechaConsulta)
                     .Select(MapConsultaMedica)
                     .ToList()

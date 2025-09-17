@@ -54,6 +54,18 @@ export class CitasComponent implements OnInit, OnDestroy {
   mensajeCitaError?: string;
   citaForm: FormGroup;
   pacientes: Paciente[] = [];
+  private readonly instruccionesCamposCita: Record<string, string> = {
+    pacienteId: 'Paciente existente: selecciona un paciente de la lista desplegable.',
+    'nuevoPaciente.cedula': 'Cédula del nuevo paciente: ingresa 10 dígitos numéricos sin espacios.',
+    'nuevoPaciente.nombres': 'Nombres del nuevo paciente: escribe los nombres completos.',
+    'nuevoPaciente.apellidos': 'Apellidos del nuevo paciente: escribe los apellidos completos.',
+    'nuevoPaciente.fechaNacimiento': 'Fecha de nacimiento: selecciona una fecha válida en formato AAAA-MM-DD.',
+    'nuevoPaciente.genero': 'Género del nuevo paciente: elige una opción disponible.',
+    'nuevoPaciente.telefono': 'Teléfono del nuevo paciente: registra un número de contacto de 10 dígitos.',
+    fecha: 'Fecha de la cita: selecciona el día en formato AAAA-MM-DD.',
+    horaInicio: 'Hora de inicio: elige la hora de inicio en formato 24 horas HH:MM.',
+    horaFin: 'Hora de fin: especifica una hora de finalización posterior a la hora de inicio en formato HH:MM.'
+  };
 
   private readonly destroy$ = new Subject<void>();
   private readonly workRanges = [
@@ -260,6 +272,7 @@ export class CitasComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Programa una cita con validaciones específicas según el modo de captura de paciente
   programarCita(): void {
     this.mensajeCitaExito = undefined;
     this.mensajeCitaError = undefined;
@@ -269,6 +282,8 @@ export class CitasComponent implements OnInit, OnDestroy {
       if (this.modoPaciente === 'nuevo') {
         this.nuevoPacienteForm.markAllAsTouched();
       }
+      const instrucciones = this.obtenerInstruccionesCamposCita();
+      alert(`Revisa la información requerida antes de registrar la cita:\n- ${instrucciones.join('\n- ')}`);
       return;
     }
 
@@ -282,7 +297,9 @@ export class CitasComponent implements OnInit, OnDestroy {
     if (valores.modoPaciente === 'existente') {
       if (!valores.pacienteId) {
         this.guardandoCita = false;
+        const instrucciones = this.obtenerInstruccionesCamposCita();
         this.mensajeCitaError = 'Selecciona un paciente válido para registrar la cita.';
+        alert(`Antes de continuar debes corregir los campos obligatorios:\n- ${instrucciones.join('\n- ')}`);
         return;
       }
       solicitud$ = this.citasService.create(this.crearPayloadCita(valores.pacienteId, valores));
@@ -469,7 +486,7 @@ export class CitasComponent implements OnInit, OnDestroy {
       nuevoPacienteGroup.get('apellidos')?.setValidators([Validators.required]);
       nuevoPacienteGroup.get('fechaNacimiento')?.setValidators([Validators.required]);
       nuevoPacienteGroup.get('genero')?.setValidators([Validators.required]);
-      nuevoPacienteGroup.get('telefono')?.clearValidators();
+      nuevoPacienteGroup.get('telefono')?.setValidators([Validators.required, Validators.minLength(10), Validators.maxLength(10)]);
       const emailControl = nuevoPacienteGroup.get('email');
       emailControl?.setValidators([Validators.email]);
       Object.values(nuevoPacienteGroup.controls).forEach(control => control.updateValueAndValidity({ emitEvent: false }));
@@ -584,5 +601,39 @@ export class CitasComponent implements OnInit, OnDestroy {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  // Construye la lista de instrucciones con los campos requeridos que están inválidos
+  private obtenerInstruccionesCamposCita(): string[] {
+    const mensajes: string[] = [];
+    const controles: Array<[string, boolean]> = [
+      ['fecha', true],
+      ['horaInicio', true],
+      ['horaFin', true],
+      ['pacienteId', this.modoPaciente === 'existente']
+    ];
+
+    controles.forEach(([path, evaluar]) => {
+      if (!evaluar) {
+        return;
+      }
+      const control = this.citaForm.get(path);
+      if (control && control.invalid) {
+        mensajes.push(this.instruccionesCamposCita[path] ?? 'Verifica la información ingresada.');
+      }
+    });
+
+    if (this.modoPaciente === 'nuevo') {
+      const camposNuevoPaciente: string[] = ['cedula', 'nombres', 'apellidos', 'fechaNacimiento', 'genero', 'telefono'];
+      camposNuevoPaciente.forEach(campo => {
+        const control = this.nuevoPacienteForm.get(campo);
+        const clave = `nuevoPaciente.${campo}`;
+        if (control && control.invalid) {
+          mensajes.push(this.instruccionesCamposCita[clave] ?? 'Completa la información del nuevo paciente.');
+        }
+      });
+    }
+
+    return mensajes.length ? mensajes : ['Verifica los campos resaltados en rojo.'];
   }
 }

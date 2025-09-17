@@ -48,13 +48,18 @@
           
           <div class="form-row">
             <div class="form-group">
-              <label for="cedula">Cédula *</label>
+              <label for="cedula" class="required-label">
+                Cédula
+                <span class="required-indicator">*</span>
+              </label>
               <input
                 type="text"
                 id="cedula"
                 formControlName="cedula"
                 maxlength="10"
                 class="form-control"
+                required
+                aria-required="true"
                 [class.error]="formularioPaciente.get('cedula')?.invalid && formularioPaciente.get('cedula')?.touched"
                 placeholder="1717123456"
               >
@@ -64,12 +69,17 @@
             </div>
 
             <div class="form-group">
-              <label for="nombres">Nombres *</label>
+              <label for="nombres" class="required-label">
+                Nombres
+                <span class="required-indicator">*</span>
+              </label>
               <input
                 type="text"
                 id="nombres"
                 formControlName="nombres"
                 class="form-control"
+                required
+                aria-required="true"
                 [class.error]="formularioPaciente.get('nombres')?.invalid && formularioPaciente.get('nombres')?.touched"
                 placeholder="María José"
               >
@@ -79,12 +89,17 @@
             </div>
 
             <div class="form-group">
-              <label for="apellidos">Apellidos *</label>
+              <label for="apellidos" class="required-label">
+                Apellidos
+                <span class="required-indicator">*</span>
+              </label>
               <input
                 type="text"
                 id="apellidos"
                 formControlName="apellidos"
                 class="form-control"
+                required
+                aria-required="true"
                 [class.error]="formularioPaciente.get('apellidos')?.invalid && formularioPaciente.get('apellidos')?.touched"
                 placeholder="González Pérez"
               >
@@ -96,19 +111,27 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+              <label for="fechaNacimiento" class="required-label">
+                Fecha de Nacimiento
+                <span class="required-indicator">*</span>
+              </label>
               <input
                 type="date"
                 id="fechaNacimiento"
                 formControlName="fechaNacimiento"
                 class="form-control"
+                required
+                aria-required="true"
                 [max]="maxFechaNacimiento"
               >
             </div>
 
             <div class="form-group">
-              <label for="genero">Género *</label>
-              <select id="genero" formControlName="genero" class="form-control">
+              <label for="genero" class="required-label">
+                Género
+                <span class="required-indicator">*</span>
+              </label>
+              <select id="genero" formControlName="genero" class="form-control" required aria-required="true">
                 <option value="">Seleccionar</option>
                 <option value="M">Masculino</option>
                 <option value="F">Femenino</option>
@@ -116,8 +139,11 @@
             </div>
 
             <div class="form-group">
-              <label for="estadoCivil">Estado Civil *</label>
-              <select id="estadoCivil" formControlName="estadoCivil" class="form-control">
+              <label for="estadoCivil" class="required-label">
+                Estado Civil
+                <span class="required-indicator">*</span>
+              </label>
+              <select id="estadoCivil" formControlName="estadoCivil" class="form-control" required aria-required="true">
                 <option value="">Seleccionar</option>
                 <option value="Soltero">Soltero/a</option>
                 <option value="Casado">Casado/a</option>
@@ -135,12 +161,19 @@
           
           <div class="form-row">
             <div class="form-group">
-              <label for="telefono">Teléfono *</label>
+              <label for="telefono" class="required-label">
+                Teléfono
+                <span class="required-indicator">*</span>
+              </label>
               <input
                 type="tel"
                 id="telefono"
                 formControlName="telefono"
                 class="form-control"
+                maxlength="10"
+                inputmode="tel"
+                required
+                aria-required="true"
                 placeholder="0987654321"
               >
             </div>
@@ -170,12 +203,17 @@
 
           <div class="form-row">
             <div class="form-group full-width">
-              <label for="direccion">Dirección *</label>
+              <label for="direccion" class="required-label">
+                Dirección
+                <span class="required-indicator">*</span>
+              </label>
               <input
                 type="text"
                 id="direccion"
                 formControlName="direccion"
                 class="form-control"
+                required
+                aria-required="true"
                 placeholder="Malchinguí, Calle Principal 123"
               >
             </div>

@@ -11,7 +11,6 @@
         <select
           id="pacienteSelect"
           [formControl]="pacienteControl"
-          [disabled]="cargandoPacientes"
         >
           <option [ngValue]="null">Todos los pacientes</option>
           <option *ngFor="let paciente of pacientes" [ngValue]="paciente.id ?? null">
@@ -191,9 +190,9 @@
 
         <form [formGroup]="consultaForm" (ngSubmit)="registrarConsulta()">
           <div class="form-grid">
-            <label>
-              Fecha de consulta
-              <input type="date" formControlName="fechaConsulta" />
+            <label class="required-field">
+              <span class="label-title">Fecha de consulta <span class="required-asterisk">*</span></span>
+              <input type="date" formControlName="fechaConsulta" required />
             </label>
             <label>
               Plantilla rápida
@@ -203,22 +202,25 @@
                   {{ plantilla.nombre }}
                 </option>
               </select>
+              <small class="mensaje-plantillas" *ngIf="!cargandoPlantillas && mensajePlantillas">
+                {{ mensajePlantillas }}
+              </small>
             </label>
-            <label>
-              Motivo
-              <input type="text" formControlName="motivoConsulta" placeholder="Motivo de consulta" />
+            <label class="required-field">
+              <span class="label-title">Motivo <span class="required-asterisk">*</span></span>
+              <input type="text" formControlName="motivoConsulta" placeholder="Motivo de consulta" required />
             </label>
-            <label>
-              Síntomas
-              <textarea formControlName="sintomas" rows="2" placeholder="Síntomas principales"></textarea>
+            <label class="required-field">
+              <span class="label-title">Síntomas <span class="required-asterisk">*</span></span>
+              <textarea formControlName="sintomas" rows="2" placeholder="Síntomas principales" required></textarea>
             </label>
-            <label>
-              Diagnóstico
-              <textarea formControlName="diagnostico" rows="2" placeholder="Diagnóstico médico"></textarea>
+            <label class="required-field">
+              <span class="label-title">Diagnóstico <span class="required-asterisk">*</span></span>
+              <textarea formControlName="diagnostico" rows="2" placeholder="Diagnóstico médico" required></textarea>
             </label>
-            <label>
-              Tratamiento
-              <textarea formControlName="tratamiento" rows="2" placeholder="Indicaciones terapéuticas"></textarea>
+            <label class="required-field">
+              <span class="label-title">Tratamiento <span class="required-asterisk">*</span></span>
+              <textarea formControlName="tratamiento" rows="2" placeholder="Indicaciones terapéuticas" required></textarea>
             </label>
             <label>
               Observaciones
@@ -229,11 +231,13 @@
           <div class="examen-fisico">
             <h4>Examen físico</h4>
             <div class="examen-grid">
-              <label>Peso (kg)
-                <input type="number" formControlName="pesoKg" min="1" step="0.1" />
+              <label class="required-field">
+                <span class="label-title">Peso (kg) <span class="required-asterisk">*</span></span>
+                <input type="number" formControlName="pesoKg" min="1" step="0.1" placeholder="Ej. 70.5" required />
               </label>
-              <label>Estatura (cm)
-                <input type="number" formControlName="estaturaCm" min="40" step="0.5" />
+              <label class="required-field">
+                <span class="label-title">Estatura (cm) <span class="required-asterisk">*</span></span>
+                <input type="number" formControlName="estaturaCm" min="40" step="0.5" placeholder="Ej. 165.5" required />
               </label>
               <label>Temperatura (°C)
                 <input type="number" formControlName="temperaturaC" step="0.1" />

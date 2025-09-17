@@ -21,6 +21,16 @@ export class PacientesComponent implements OnInit {
   pacientesFiltrados: Paciente[] = [];
   cargando = false;
   maxFechaNacimiento = new Date().toISOString().split('T')[0];
+  private readonly instruccionesCampos: Record<string, string> = {
+    cedula: 'Cédula: ingresa 10 dígitos numéricos sin espacios ni guiones.',
+    nombres: 'Nombres: escribe al menos dos caracteres alfabéticos.',
+    apellidos: 'Apellidos: escribe al menos dos caracteres alfabéticos.',
+    fechaNacimiento: 'Fecha de nacimiento: selecciona una fecha válida menor o igual a hoy.',
+    genero: 'Género: selecciona una opción de la lista desplegable.',
+    telefono: 'Teléfono: registra un número de 10 dígitos para poder contactarte.',
+    direccion: 'Dirección: detalla la calle y número principal de residencia.',
+    estadoCivil: 'Estado civil: elige el estado civil actual del paciente.'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -41,7 +51,7 @@ export class PacientesComponent implements OnInit {
       apellidos: ['', [Validators.required, Validators.minLength(2)]],
       fechaNacimiento: ['', Validators.required],
       genero: ['', Validators.required],
-      telefono: ['', [Validators.required, Validators.minLength(10)]],
+      telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10)]],
       email: ['', [Validators.email]],
       direccion: ['', Validators.required],
       estadoCivil: ['', Validators.required],
@@ -116,65 +126,68 @@ export class PacientesComponent implements OnInit {
 
   // Guardar paciente (crear o actualizar)
   guardarPaciente(): void {
-    if (this.formularioPaciente.valid) {
-      const formData = this.formularioPaciente.value;
-      
-      // Validar cédula ecuatoriana
-      if (!this.pacientesService.validarCedulaEcuatoriana(formData.cedula)) {
-        alert('La cédula ingresada no es válida para Ecuador');
-        return;
-      }
+    if (this.formularioPaciente.invalid) {
+      this.formularioPaciente.markAllAsTouched();
+      const instrucciones = this.obtenerInstruccionesCamposRequeridos();
+      alert(`Para guardar el paciente completa los campos obligatorios:\n- ${instrucciones.join('\n- ')}`);
+      return;
+    }
 
-      const contactoEmergencia = this.obtenerContactoEmergencia(formData);
+    const formData = this.formularioPaciente.value;
 
-      const paciente: Paciente = {
-        ...(this.pacienteSeleccionado?.id ? { id: this.pacienteSeleccionado.id } : {}),
-        cedula: formData.cedula,
-        nombres: formData.nombres,
-        apellidos: formData.apellidos,
-        fechaNacimiento: new Date(formData.fechaNacimiento),
-        edad: 0, // Se recalcula al recibir la respuesta del servicio
-        genero: formData.genero,
-        telefono: formData.telefono,
-        direccion: formData.direccion,
-        estadoCivil: formData.estadoCivil,
-        ocupacion: formData.ocupacion,
-        ...(contactoEmergencia ? { contactoEmergencia } : {}),
-        alergias: formData.alergias ? formData.alergias.split(',').map((a: string) => a.trim()) : [],
-        medicamentosActuales: formData.medicamentosActuales ? formData.medicamentosActuales.split(',').map((m: string) => m.trim()) : [],
-        enfermedadesCronicas: formData.enfermedadesCronicas ? formData.enfermedadesCronicas.split(',').map((e: string) => e.trim()) : [],
-        fechaRegistro: this.pacienteSeleccionado?.fechaRegistro || new Date(),
-        activo: this.pacienteSeleccionado?.activo ?? true,
-        email: formData.email
-      };
+    // Validar cédula ecuatoriana con una instrucción clara en caso de error
+    if (!this.pacientesService.validarCedulaEcuatoriana(formData.cedula)) {
+      alert('La cédula ingresada no es válida. Ingresa 10 dígitos numéricos sin espacios ni guiones.');
+      return;
+    }
 
-      if (this.pacienteSeleccionado) {
-        this.pacientesService.actualizarPaciente(paciente).subscribe({
-          next: () => {
-            this.cerrarFormulario();
-            this.cargarPacientes();
-            alert('Paciente actualizado correctamente');
-          },
-          error: (error: unknown) => {
-            console.error('Error al guardar paciente:', error);
-            alert('Error al guardar el paciente');
-          }
-        });
-      } else {
-        this.pacientesService.agregarPaciente(paciente).subscribe({
-          next: () => {
-            this.cerrarFormulario();
-            this.cargarPacientes();
-            alert('Paciente registrado correctamente');
-          },
-          error: (error: unknown) => {
-            console.error('Error al guardar paciente:', error);
-            alert('Error al guardar el paciente');
-          }
-        });
-      }
+    const contactoEmergencia = this.obtenerContactoEmergencia(formData);
+
+    const paciente: Paciente = {
+      ...(this.pacienteSeleccionado?.id ? { id: this.pacienteSeleccionado.id } : {}),
+      cedula: formData.cedula,
+      nombres: formData.nombres,
+      apellidos: formData.apellidos,
+      fechaNacimiento: new Date(formData.fechaNacimiento),
+      edad: 0, // Se recalcula al recibir la respuesta del servicio
+      genero: formData.genero,
+      telefono: formData.telefono,
+      direccion: formData.direccion,
+      estadoCivil: formData.estadoCivil,
+      ocupacion: formData.ocupacion,
+      ...(contactoEmergencia ? { contactoEmergencia } : {}),
+      alergias: formData.alergias ? formData.alergias.split(',').map((a: string) => a.trim()) : [],
+      medicamentosActuales: formData.medicamentosActuales ? formData.medicamentosActuales.split(',').map((m: string) => m.trim()) : [],
+      enfermedadesCronicas: formData.enfermedadesCronicas ? formData.enfermedadesCronicas.split(',').map((e: string) => e.trim()) : [],
+      fechaRegistro: this.pacienteSeleccionado?.fechaRegistro || new Date(),
+      activo: this.pacienteSeleccionado?.activo ?? true,
+      email: formData.email
+    };
+
+    if (this.pacienteSeleccionado) {
+      this.pacientesService.actualizarPaciente(paciente).subscribe({
+        next: () => {
+          this.cerrarFormulario();
+          this.cargarPacientes();
+          alert('Paciente actualizado correctamente');
+        },
+        error: (error: unknown) => {
+          console.error('Error al guardar paciente:', error);
+          alert('Error al guardar el paciente');
+        }
+      });
     } else {
-      alert('Por favor, complete todos los campos requeridos');
+      this.pacientesService.agregarPaciente(paciente).subscribe({
+        next: () => {
+          this.cerrarFormulario();
+          this.cargarPacientes();
+          alert('Paciente registrado correctamente');
+        },
+        error: (error: unknown) => {
+          console.error('Error al guardar paciente:', error);
+          alert('Error al guardar el paciente');
+        }
+      });
     }
   }
 
@@ -234,10 +247,38 @@ export class PacientesComponent implements OnInit {
   obtenerError(campo: string): string {
     const control = this.formularioPaciente.get(campo);
     if (control?.errors && control.touched) {
-      if (control.errors['required']) return `${campo} es requerido`;
-      if (control.errors['minlength']) return `${campo} es muy corto`;
+      if (control.errors['required']) {
+        return this.instruccionesCampos[campo] ?? 'Este campo es obligatorio.';
+      }
+      if (control.errors['minlength']) {
+        if (campo === 'cedula' || campo === 'telefono') {
+          return 'Debe contener al menos 10 dígitos numéricos.';
+        }
+        return 'Ingresa más caracteres para completar la información.';
+      }
+      if (control.errors['maxlength']) {
+        if (campo === 'cedula') {
+          return 'La cédula debe contener exactamente 10 dígitos.';
+        }
+        if (campo === 'telefono') {
+          return 'El teléfono debe contener exactamente 10 dígitos.';
+        }
+      }
       if (control.errors['email']) return 'Email inválido';
     }
     return '';
+  }
+
+  // Construye las instrucciones detalladas para cada campo requerido que esté inválido
+  private obtenerInstruccionesCamposRequeridos(): string[] {
+    const mensajes: string[] = [];
+    Object.entries(this.instruccionesCampos).forEach(([campo, mensaje]) => {
+      const control = this.formularioPaciente.get(campo);
+      if (control && control.invalid) {
+        mensajes.push(mensaje);
+      }
+    });
+
+    return mensajes.length ? mensajes : ['Verifica los datos resaltados en rojo.'];
   }
 }

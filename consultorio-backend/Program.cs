@@ -1,4 +1,6 @@
 using ConsultorioMedico.API.Data;
+using ConsultorioMedico.API.Models;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
@@ -77,6 +79,47 @@ try
     {
         var context = scope.ServiceProvider.GetRequiredService<ConsultorioDbContext>();
         context.Database.EnsureCreated();
+
+        if (!context.PlantillasConsulta.Any())
+        {
+            context.PlantillasConsulta.AddRange(new[]
+            {
+                new PlantillaConsultaModel
+                {
+                    PlantillaConsultaId = 1,
+                    Nombre = "Consulta general",
+                    MotivoConsulta = "Control de rutina",
+                    Sintomas = "Paciente refiere malestar general leve",
+                    Diagnostico = "Evaluación inicial",
+                    Tratamiento = "Recomendaciones generales y reposo",
+                    Observaciones = "Registrar signos vitales básicos"
+                },
+                new PlantillaConsultaModel
+                {
+                    PlantillaConsultaId = 2,
+                    Nombre = "Cuadro respiratorio",
+                    MotivoConsulta = "Dolor de garganta y tos",
+                    Sintomas = "Tos seca, congestión nasal, fiebre leve",
+                    Diagnostico = "Infección de vías respiratorias altas",
+                    Tratamiento = "Antitérmicos y reposo hidratación",
+                    Observaciones = "Verificar antecedentes de alergias"
+                },
+                new PlantillaConsultaModel
+                {
+                    PlantillaConsultaId = 3,
+                    Nombre = "Seguimiento crónico",
+                    MotivoConsulta = "Control de enfermedad crónica",
+                    Sintomas = "Paciente niega síntomas nuevos",
+                    Diagnostico = "Seguimiento de condición estable",
+                    Tratamiento = "Mantener medicación actual",
+                    Observaciones = "Solicitar análisis de laboratorio si corresponde"
+                }
+            });
+
+            context.SaveChanges();
+            Console.WriteLine("Plantillas de consulta iniciales creadas.");
+        }
+
         Console.WriteLine("Base de datos verificada/creada exitosamente.");
     }
 }

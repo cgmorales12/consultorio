@@ -134,6 +134,23 @@
   font-size: 0.9rem;
 }
 
+.required-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.required-label > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.required-indicator {
+  color: #dc3545;
+  font-weight: 700;
+}
+
 .nueva-cita__form input,
 .nueva-cita__form select,
 .nueva-cita__form textarea {

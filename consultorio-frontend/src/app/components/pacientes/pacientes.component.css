@@ -190,6 +190,17 @@
   flex-direction: column;
 }
 
+.required-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-indicator {
+  color: #dc3545;
+  font-weight: 700;
+}
+
 .form-group.full-width {
   grid-column: 1 / -1;
 }

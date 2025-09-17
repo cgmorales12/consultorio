@@ -30,6 +30,7 @@ export class HistoriasClinicasComponent implements OnInit {
   guardandoConsulta = false;
   creandoHistoria = false;
   mensajeError?: string;
+  mensajePlantillas?: string;
   pacientes: Paciente[] = [];
   pacienteControl = new FormControl<number | null>(null);
   pacienteFiltradoId: number | null = null;
@@ -39,6 +40,7 @@ export class HistoriasClinicasComponent implements OnInit {
     private readonly historiasService: HistoriasClinicasService,
     private readonly pacientesService: PacientesService
   ) {
+    // Configura el formulario de antecedentes sin campos obligatorios pero listo para persistir datos.
     this.antecedentesForm = this.fb.group({
       antecedentesPersonales: [''],
       antecedentesFamiliares: [''],
@@ -46,6 +48,7 @@ export class HistoriasClinicasComponent implements OnInit {
       alergias: ['']
     });
 
+    // Configura el formulario de consulta estableciendo validaciones para campos clínicos obligatorios.
     this.consultaForm = this.fb.group({
       fechaConsulta: [this.hoy, Validators.required],
       plantillaId: [null],
@@ -63,10 +66,12 @@ export class HistoriasClinicasComponent implements OnInit {
     });
   }
 
+  // Obtiene la fecha actual en formato ISO corto para precargar la fecha de la consulta.
   private get hoy(): string {
     return new Date().toISOString().split('T')[0];
   }
 
+  // Inicializa la carga de datos y las suscripciones necesarias cuando el componente se monta.
   ngOnInit(): void {
     this.cargarPlantillas();
     this.cargarPacientes();
@@ -83,6 +88,7 @@ export class HistoriasClinicasComponent implements OnInit {
     this.consultaForm.get('plantillaId')?.valueChanges.subscribe((id) => this.aplicarPlantilla(id));
   }
 
+  // Carga las historias clínicas disponibles, permitiendo filtrar por paciente si se selecciona alguno.
   cargarHistorias(pacienteId?: number): void {
     this.pacienteFiltradoId = pacienteId ?? null;
     this.cargandoHistorias = true;
@@ -119,20 +125,41 @@ export class HistoriasClinicasComponent implements OnInit {
       });
   }
 
+  // Obtiene las plantillas de consulta rápidas para facilitar el llenado del formulario clínico.
   cargarPlantillas(): void {
     this.cargandoPlantillas = true;
+    this.mensajePlantillas = undefined;
     this.historiasService.obtenerPlantillas()
       .pipe(finalize(() => (this.cargandoPlantillas = false)))
       .subscribe({
-        next: (plantillas) => (this.plantillas = plantillas),
-        error: (error) => console.error('No se pudieron cargar las plantillas de consulta', error)
+        next: (plantillas) => {
+          this.plantillas = Array.isArray(plantillas) ? plantillas : [];
+
+          if (this.plantillas.length === 0) {
+            this.mensajePlantillas = 'No hay plantillas rápidas disponibles. Completa los campos manualmente.';
+          } else {
+            this.mensajePlantillas = undefined;
+          }
+        },
+        error: (error) => {
+          console.error('No se pudieron cargar las plantillas de consulta', error);
+          this.plantillas = [];
+          this.mensajePlantillas = 'No se pudieron cargar las plantillas rápidas. Intenta nuevamente más tarde.';
+        }
       });
   }
 
+  // Recupera el catálogo de pacientes y administra el estado del selector en la vista.
   cargarPacientes(): void {
     this.cargandoPacientes = true;
+    this.actualizarEstadoPacienteControl(true);
     this.pacientesService.obtenerTodos()
-      .pipe(finalize(() => (this.cargandoPacientes = false)))
+      .pipe(
+        finalize(() => {
+          this.cargandoPacientes = false;
+          this.actualizarEstadoPacienteControl(false);
+        })
+      )
       .subscribe({
         next: (pacientes) => {
           this.pacientes = pacientes;
@@ -144,6 +171,7 @@ export class HistoriasClinicasComponent implements OnInit {
       });
   }
 
+  // Permite crear una historia clínica nueva para el paciente seleccionado.
   crearHistoriaParaPaciente(): void {
     const pacienteId = this.pacienteControl.value;
     if (!pacienteId) {
@@ -173,6 +201,7 @@ export class HistoriasClinicasComponent implements OnInit {
       });
   }
 
+  // Define la historia seleccionada y reinicia formularios auxiliares ligados a la consulta.
   seleccionarHistoria(historia: HistoriaClinica): void {
     this.historiaSeleccionada = historia;
     this.alertasConsulta = [];
@@ -203,6 +232,7 @@ export class HistoriasClinicasComponent implements OnInit {
     });
   }
 
+  // Envía los antecedentes médicos del paciente al backend para su persistencia.
   guardarAntecedentes(): void {
     if (!this.historiaSeleccionada) {
       return;
@@ -225,6 +255,7 @@ export class HistoriasClinicasComponent implements OnInit {
       });
   }
 
+  // Valida y envía una nueva consulta médica, mostrando alertas cuando falte información clave.
   registrarConsulta(): void {
     if (!this.historiaSeleccionada) {
       return;
@@ -232,6 +263,7 @@ export class HistoriasClinicasComponent implements OnInit {
 
     if (this.consultaForm.invalid) {
       this.consultaForm.markAllAsTouched();
+      this.mostrarAlertasDeValidacion();
       return;
     }
 
@@ -289,6 +321,7 @@ export class HistoriasClinicasComponent implements OnInit {
       });
   }
 
+  // Convierte fechas ISO en un formato legible para la interfaz.
   formatearFecha(fecha: string): string {
     if (!fecha) {
       return '—';
@@ -306,6 +339,7 @@ export class HistoriasClinicasComponent implements OnInit {
     });
   }
 
+  // Selecciona el ícono adecuado según el contenido de la alerta clínica.
   obtenerIconoAlerta(alerta: string): string {
     if (alerta.toLowerCase().includes('fiebre')) {
       return 'fa-thermometer-half';
@@ -322,6 +356,7 @@ export class HistoriasClinicasComponent implements OnInit {
     return 'fa-exclamation-circle';
   }
 
+  // Copia los datos de la plantilla elegida al formulario para agilizar el llenado.
   private aplicarPlantilla(plantillaId: number | null): void {
     if (!plantillaId) {
       return;
@@ -341,6 +376,55 @@ export class HistoriasClinicasComponent implements OnInit {
     });
   }
 
+  // Construye mensajes explicativos para los campos obligatorios y muestra una alerta consolidada.
+  private mostrarAlertasDeValidacion(): void {
+    const mensajes: string[] = [];
+    const fechaConsulta = this.consultaForm.get('fechaConsulta');
+    const motivoConsulta = this.consultaForm.get('motivoConsulta');
+    const sintomas = this.consultaForm.get('sintomas');
+    const diagnostico = this.consultaForm.get('diagnostico');
+    const tratamiento = this.consultaForm.get('tratamiento');
+    const pesoKg = this.consultaForm.get('pesoKg');
+    const estaturaCm = this.consultaForm.get('estaturaCm');
+
+    if (fechaConsulta?.hasError('required')) {
+      mensajes.push('La fecha de la consulta es obligatoria. Selecciona una fecha válida.');
+    }
+
+    if (motivoConsulta?.hasError('required')) {
+      mensajes.push('El motivo de la consulta es obligatorio. Describe brevemente la razón de la visita.');
+    }
+
+    if (sintomas?.hasError('required')) {
+      mensajes.push('Los síntomas son obligatorios. Detalla los signos o molestias reportados por el paciente.');
+    }
+
+    if (diagnostico?.hasError('required')) {
+      mensajes.push('El diagnóstico es obligatorio. Ingresa la valoración médica del caso.');
+    }
+
+    if (tratamiento?.hasError('required')) {
+      mensajes.push('El tratamiento es obligatorio. Registra las indicaciones terapéuticas entregadas.');
+    }
+
+    if (pesoKg?.hasError('required')) {
+      mensajes.push('Ingresa el peso del paciente en kilogramos. Usa números con punto decimal, por ejemplo 70.5.');
+    } else if (pesoKg?.hasError('min')) {
+      mensajes.push('El peso debe ser mayor a 1 kg para calcular el IMC correctamente.');
+    }
+
+    if (estaturaCm?.hasError('required')) {
+      mensajes.push('Ingresa la estatura del paciente en centímetros. Usa números con punto decimal, por ejemplo 165.5.');
+    } else if (estaturaCm?.hasError('min')) {
+      mensajes.push('La estatura debe ser mayor a 40 cm para calcular el IMC correctamente.');
+    }
+
+    if (mensajes.length > 0) {
+      alert(mensajes.join('\n'));
+    }
+  }
+
+  // Calcula el IMC provisional con los valores del formulario y actualiza la vista previa.
   private actualizarImc(): void {
     const peso = Number(this.consultaForm.get('pesoKg')?.value);
     const estatura = Number(this.consultaForm.get('estaturaCm')?.value);
@@ -356,6 +440,7 @@ export class HistoriasClinicasComponent implements OnInit {
     }
   }
 
+  // Determina la categoría del IMC a partir del valor calculado.
   private clasificarImc(imc: number | null): string {
     if (imc === null) {
       return '';
@@ -372,6 +457,7 @@ export class HistoriasClinicasComponent implements OnInit {
     return 'Obesidad';
   }
 
+  // Solicita la historia clínica actualizada tras registrar una consulta para refrescar la lista y los detalles.
   private recargarHistoria(id: number): void {
     this.historiasService.obtenerHistoria(id).subscribe({
       next: (historia) => {
@@ -382,6 +468,7 @@ export class HistoriasClinicasComponent implements OnInit {
     });
   }
 
+  // Sustituye o agrega la historia clínica recibida para mantener sincronizado el listado local.
   private actualizarListado(historiaActualizada: HistoriaClinica): void {
     const indice = this.historias.findIndex(h => h.historiaClinicaId === historiaActualizada.historiaClinicaId);
     if (indice >= 0) {
@@ -393,6 +480,21 @@ export class HistoriasClinicasComponent implements OnInit {
     }
   }
 
+  // Controla el estado habilitado del selector de pacientes durante la carga de información.
+  private actualizarEstadoPacienteControl(deshabilitar: boolean): void {
+    if (deshabilitar) {
+      if (!this.pacienteControl.disabled) {
+        this.pacienteControl.disable({ emitEvent: false });
+      }
+      return;
+    }
+
+    if (this.pacienteControl.disabled) {
+      this.pacienteControl.enable({ emitEvent: false });
+    }
+  }
+
+  // Expone las consultas ordenadas descendentemente por fecha para su representación en pantalla.
   get historialConsultas(): ConsultaMedica[] {
     const consultas = this.historiaSeleccionada?.consultas ?? [];
 

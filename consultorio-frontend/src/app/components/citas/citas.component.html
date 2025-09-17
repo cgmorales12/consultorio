@@ -51,9 +51,15 @@
       </div>
 
       <div class="paciente-existente" *ngIf="modoPaciente === 'existente'">
-        <label>
-          Selecciona un paciente
-          <select formControlName="pacienteId" [disabled]="cargandoPacientes">
+        <label class="required-label">
+          <span>Selecciona un paciente</span>
+          <span class="required-indicator" *ngIf="modoPaciente === 'existente'">*</span>
+          <select
+            formControlName="pacienteId"
+            [disabled]="cargandoPacientes"
+            [attr.required]="modoPaciente === 'existente' ? true : null"
+            [attr.aria-required]="modoPaciente === 'existente' ? 'true' : null"
+          >
             <option [ngValue]="null">Selecciona un paciente</option>
             <option *ngFor="let paciente of pacientes" [ngValue]="paciente.id ?? null">
               {{ paciente.nombreCompleto || (paciente.nombres + ' ' + paciente.apellidos) }}
@@ -65,34 +71,73 @@
 
       <div class="nuevo-paciente" formGroupName="nuevoPaciente" *ngIf="modoPaciente === 'nuevo'">
         <div class="nuevo-paciente-grid">
-          <label>
-            Cédula
-            <input type="text" formControlName="cedula" maxlength="10">
+          <label class="required-label">
+            <span>Cédula</span>
+            <span class="required-indicator" *ngIf="modoPaciente === 'nuevo'">*</span>
+            <input
+              type="text"
+              formControlName="cedula"
+              maxlength="10"
+              inputmode="numeric"
+              [attr.required]="modoPaciente === 'nuevo' ? true : null"
+              [attr.aria-required]="modoPaciente === 'nuevo' ? 'true' : null"
+            >
           </label>
-          <label>
-            Nombres
-            <input type="text" formControlName="nombres">
+          <label class="required-label">
+            <span>Nombres</span>
+            <span class="required-indicator" *ngIf="modoPaciente === 'nuevo'">*</span>
+            <input
+              type="text"
+              formControlName="nombres"
+              [attr.required]="modoPaciente === 'nuevo' ? true : null"
+              [attr.aria-required]="modoPaciente === 'nuevo' ? 'true' : null"
+            >
           </label>
-          <label>
-            Apellidos
-            <input type="text" formControlName="apellidos">
+          <label class="required-label">
+            <span>Apellidos</span>
+            <span class="required-indicator" *ngIf="modoPaciente === 'nuevo'">*</span>
+            <input
+              type="text"
+              formControlName="apellidos"
+              [attr.required]="modoPaciente === 'nuevo' ? true : null"
+              [attr.aria-required]="modoPaciente === 'nuevo' ? 'true' : null"
+            >
           </label>
-          <label>
-            Fecha de nacimiento
-            <input type="date" formControlName="fechaNacimiento">
+          <label class="required-label">
+            <span>Fecha de nacimiento</span>
+            <span class="required-indicator" *ngIf="modoPaciente === 'nuevo'">*</span>
+            <input
+              type="date"
+              formControlName="fechaNacimiento"
+              [attr.required]="modoPaciente === 'nuevo' ? true : null"
+              [attr.aria-required]="modoPaciente === 'nuevo' ? 'true' : null"
+            >
           </label>
-          <label>
-            Género
-            <select formControlName="genero">
+          <label class="required-label">
+            <span>Género</span>
+            <span class="required-indicator" *ngIf="modoPaciente === 'nuevo'">*</span>
+            <select
+              formControlName="genero"
+              [attr.required]="modoPaciente === 'nuevo' ? true : null"
+              [attr.aria-required]="modoPaciente === 'nuevo' ? 'true' : null"
+            >
               <option value="">Selecciona</option>
               <option value="M">Masculino</option>
               <option value="F">Femenino</option>
               <option value="Otro">Otro</option>
             </select>
           </label>
-          <label>
-            Teléfono
-            <input type="tel" formControlName="telefono">
+          <label class="required-label">
+            <span>Teléfono</span>
+            <span class="required-indicator" *ngIf="modoPaciente === 'nuevo'">*</span>
+            <input
+              type="tel"
+              formControlName="telefono"
+              inputmode="tel"
+              maxlength="10"
+              [attr.required]="modoPaciente === 'nuevo' ? true : null"
+              [attr.aria-required]="modoPaciente === 'nuevo' ? 'true' : null"
+            >
           </label>
           <label>
             Correo electrónico
@@ -102,17 +147,20 @@
       </div>
 
       <div class="cita-datos">
-        <label>
-          Fecha de la cita
-          <input type="date" formControlName="fecha">
+        <label class="required-label">
+          <span>Fecha de la cita</span>
+          <span class="required-indicator">*</span>
+          <input type="date" formControlName="fecha" required aria-required="true">
         </label>
-        <label>
-          Hora de inicio
-          <input type="time" formControlName="horaInicio">
+        <label class="required-label">
+          <span>Hora de inicio</span>
+          <span class="required-indicator">*</span>
+          <input type="time" formControlName="horaInicio" required aria-required="true">
         </label>
-        <label>
-          Hora de fin
-          <input type="time" formControlName="horaFin">
+        <label class="required-label">
+          <span>Hora de fin</span>
+          <span class="required-indicator">*</span>
+          <input type="time" formControlName="horaFin" required aria-required="true">
         </label>
       </div>
 
