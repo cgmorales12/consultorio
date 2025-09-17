@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, interval } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { AgendaSemanalDia, Cita, DailyStats, EstadoCita } from '../../models/cita.model';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable, Subject, interval } from 'rxjs';
+import { finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { AgendaSemanalDia, Cita, CitaPayload, DailyStats, EstadoCita } from '../../models/cita.model';
 import { CitasService } from '../../services/citas.service';
+import { PacientesService as PacientesApiService, Paciente as PacienteApi } from '../../services/pacientes';
 
 type VistaCitas = 'agenda' | 'semana' | 'lista';
 
@@ -14,10 +16,12 @@ type QuickAction = {
   theme: 'primary' | 'success' | 'warning';
 };
 
+type ModoPaciente = 'existente' | 'nuevo';
+
 @Component({
   selector: 'app-citas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './citas.component.html',
   styleUrls: ['./citas.component.css']
 })
@@ -43,6 +47,12 @@ export class CitasComponent implements OnInit, OnDestroy {
   loadingList = false;
   loadingStats = false;
   updating = new Set<number>();
+  cargandoPacientes = false;
+  guardandoCita = false;
+  mensajeCitaExito?: string;
+  mensajeCitaError?: string;
+  citaForm: FormGroup;
+  pacientes: PacienteApi[] = [];
 
   private readonly destroy$ = new Subject<void>();
   private readonly workRanges = [
@@ -50,9 +60,16 @@ export class CitasComponent implements OnInit, OnDestroy {
     { start: '14:00', end: '17:30' }
   ];
 
-  constructor(private readonly citasService: CitasService) {}
+  constructor(
+    private readonly citasService: CitasService,
+    private readonly fb: FormBuilder,
+    private readonly pacientesService: PacientesApiService
+  ) {
+    this.citaForm = this.crearFormularioCita();
+  }
 
   ngOnInit(): void {
+    this.cargarPacientes();
     this.refreshAll();
     interval(30000)
       .pipe(takeUntil(this.destroy$))
@@ -93,6 +110,14 @@ export class CitasComponent implements OnInit, OnDestroy {
     return `${startLabel} - ${endLabel}`;
   }
 
+  get modoPaciente(): ModoPaciente {
+    return this.citaForm.get('modoPaciente')?.value as ModoPaciente;
+  }
+
+  get nuevoPacienteForm(): FormGroup {
+    return this.citaForm.get('nuevoPaciente') as FormGroup;
+  }
+
   setView(view: VistaCitas): void {
     if (this.view === view) {
       return;
@@ -115,6 +140,7 @@ export class CitasComponent implements OnInit, OnDestroy {
     nextDate.setDate(this.selectedDate.getDate() + offset);
     this.selectedDate = nextDate;
     this.selectedDateInput = this.toDateString(this.selectedDate);
+    this.citaForm.get('fecha')?.setValue(this.selectedDateInput);
     this.loadDailyAppointments(true);
     this.loadDailyStats(true);
     this.loadWeeklyAppointments(false);
@@ -127,6 +153,7 @@ export class CitasComponent implements OnInit, OnDestroy {
 
     this.selectedDate = new Date(`${value}T00:00:00`);
     this.selectedDateInput = value;
+    this.citaForm.get('fecha')?.setValue(this.selectedDateInput);
     this.loadDailyAppointments(true);
     this.loadDailyStats(true);
     this.loadWeeklyAppointments(false);
@@ -206,6 +233,107 @@ export class CitasComponent implements OnInit, OnDestroy {
     });
   }
 
+  cargarPacientes(seleccionarId?: number): void {
+    this.cargandoPacientes = true;
+    const pacienteActual = this.citaForm?.get('pacienteId')?.value as number | null;
+
+    this.pacientesService.obtenerPacientes()
+      .pipe(finalize(() => (this.cargandoPacientes = false)))
+      .subscribe({
+        next: response => {
+          if (response.success && Array.isArray(response.data)) {
+            this.pacientes = response.data as PacienteApi[];
+          } else {
+            this.pacientes = [];
+          }
+
+          const control = this.citaForm.get('pacienteId');
+          if (seleccionarId) {
+            control?.setValue(seleccionarId, { emitEvent: false });
+            control?.updateValueAndValidity({ emitEvent: false });
+          } else if (pacienteActual) {
+            const existe = this.pacientes.some(p => p.pacienteId === pacienteActual);
+            control?.setValue(existe ? pacienteActual : null, { emitEvent: false });
+            control?.updateValueAndValidity({ emitEvent: false });
+          }
+        },
+        error: error => {
+          console.error('No se pudieron cargar los pacientes', error);
+          this.pacientes = [];
+        }
+      });
+  }
+
+  programarCita(): void {
+    this.mensajeCitaExito = undefined;
+    this.mensajeCitaError = undefined;
+
+    if (this.citaForm.invalid) {
+      this.citaForm.markAllAsTouched();
+      if (this.modoPaciente === 'nuevo') {
+        this.nuevoPacienteForm.markAllAsTouched();
+      }
+      return;
+    }
+
+    const valores = this.citaForm.getRawValue();
+    let nuevoPacienteId: number | null = null;
+
+    this.guardandoCita = true;
+
+    let solicitud$: Observable<Cita>;
+
+    if (valores.modoPaciente === 'existente') {
+      if (!valores.pacienteId) {
+        this.guardandoCita = false;
+        this.mensajeCitaError = 'Selecciona un paciente válido para registrar la cita.';
+        return;
+      }
+      solicitud$ = this.citasService.create(this.crearPayloadCita(valores.pacienteId, valores));
+    } else {
+      const nuevoPaciente = this.nuevoPacienteForm.getRawValue();
+      const nuevoPacientePayload: Partial<PacienteApi> = {
+        cedula: nuevoPaciente.cedula,
+        nombres: nuevoPaciente.nombres,
+        apellidos: nuevoPaciente.apellidos,
+        fechaNacimiento: nuevoPaciente.fechaNacimiento,
+        genero: nuevoPaciente.genero,
+        telefono: nuevoPaciente.telefono ? nuevoPaciente.telefono : undefined,
+        email: nuevoPaciente.email ? nuevoPaciente.email : undefined
+      };
+
+      solicitud$ = this.pacientesService.crearPaciente(nuevoPacientePayload).pipe(
+        switchMap(response => {
+          const pacienteCreado = response.success ? (response.data as PacienteApi) : undefined;
+          if (!pacienteCreado?.pacienteId) {
+            throw new Error('No se pudo crear el paciente');
+          }
+          nuevoPacienteId = pacienteCreado.pacienteId;
+          return this.citasService.create(this.crearPayloadCita(pacienteCreado.pacienteId, valores)).pipe(
+            tap(() => this.cargarPacientes(pacienteCreado.pacienteId))
+          );
+        })
+      );
+    }
+
+    const pacienteSeleccionActual = this.citaForm.get('pacienteId')?.value as number | null;
+
+    solicitud$
+      .pipe(finalize(() => (this.guardandoCita = false)))
+      .subscribe({
+        next: () => {
+          const referencia = nuevoPacienteId ?? pacienteSeleccionActual ?? undefined;
+          this.mensajeCitaExito = 'Cita registrada correctamente.';
+          this.resetFormularioCita(referencia);
+          this.refreshAll();
+        },
+        error: error => {
+          console.error('No se pudo registrar la cita', error);
+          this.mensajeCitaError = 'No se pudo registrar la cita. Intenta nuevamente.';
+        }
+      });
+  }
+
   executeAction(cita: Cita, action: QuickAction): void {
     this.updating.add(cita.citaId);
     this.citasService.updateEstado(cita.citaId, action.estado).subscribe({
@@ -272,6 +400,123 @@ export class CitasComponent implements OnInit, OnDestroy {
 
     const porcentaje = this.stats.total === 0 ? 0 : Math.round((this.stats.completadas / this.stats.total) * 100);
     return `${this.stats.horasDisponibles.toFixed(1)}h disponibles • ${porcentaje}% completadas`;
+  }
+
+  private crearFormularioCita(): FormGroup {
+    const form = this.fb.group({
+      modoPaciente: ['existente' as ModoPaciente, Validators.required],
+      pacienteId: [null],
+      fecha: [this.selectedDateInput, Validators.required],
+      horaInicio: ['', Validators.required],
+      horaFin: ['', Validators.required],
+      motivo: ['', [Validators.maxLength(200)]],
+      notas: ['', [Validators.maxLength(500)]],
+      nuevoPaciente: this.fb.group({
+        cedula: [''],
+        nombres: [''],
+        apellidos: [''],
+        fechaNacimiento: [''],
+        genero: [''],
+        telefono: [''],
+        email: ['', Validators.email]
+      })
+    });
+
+    this.configurarValidadoresPaciente(form, 'existente');
+
+    form.get('modoPaciente')?.valueChanges.subscribe(modo => {
+      const valor = (modo ?? 'existente') as ModoPaciente;
+      this.configurarValidadoresPaciente(form, valor);
+    });
+
+    return form;
+  }
+
+  private configurarValidadoresPaciente(form: FormGroup, modo: ModoPaciente): void {
+    const pacienteIdControl = form.get('pacienteId');
+    const nuevoPacienteGroup = form.get('nuevoPaciente') as FormGroup;
+
+    if (modo === 'existente') {
+      pacienteIdControl?.setValidators([Validators.required]);
+      pacienteIdControl?.updateValueAndValidity({ emitEvent: false });
+
+      nuevoPacienteGroup.reset({
+        cedula: '',
+        nombres: '',
+        apellidos: '',
+        fechaNacimiento: '',
+        genero: '',
+        telefono: '',
+        email: ''
+      }, { emitEvent: false });
+
+      ['cedula', 'nombres', 'apellidos', 'fechaNacimiento', 'genero', 'telefono'].forEach(campo => {
+        const control = nuevoPacienteGroup.get(campo);
+        control?.clearValidators();
+        control?.updateValueAndValidity({ emitEvent: false });
+      });
+
+      const emailControl = nuevoPacienteGroup.get('email');
+      emailControl?.setValidators([Validators.email]);
+      emailControl?.updateValueAndValidity({ emitEvent: false });
+
+      nuevoPacienteGroup.markAsPristine();
+      nuevoPacienteGroup.markAsUntouched();
+    } else {
+      pacienteIdControl?.clearValidators();
+      pacienteIdControl?.setValue(null, { emitEvent: false });
+      pacienteIdControl?.updateValueAndValidity({ emitEvent: false });
+
+      nuevoPacienteGroup.get('cedula')?.setValidators([Validators.required, Validators.minLength(10), Validators.maxLength(10)]);
+      nuevoPacienteGroup.get('nombres')?.setValidators([Validators.required]);
+      nuevoPacienteGroup.get('apellidos')?.setValidators([Validators.required]);
+      nuevoPacienteGroup.get('fechaNacimiento')?.setValidators([Validators.required]);
+      nuevoPacienteGroup.get('genero')?.setValidators([Validators.required]);
+      nuevoPacienteGroup.get('telefono')?.clearValidators();
+      const emailControl = nuevoPacienteGroup.get('email');
+      emailControl?.setValidators([Validators.email]);
+      Object.values(nuevoPacienteGroup.controls).forEach(control => control.updateValueAndValidity({ emitEvent: false }));
+    }
+
+    pacienteIdControl?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private resetFormularioCita(pacienteId?: number): void {
+    this.citaForm.reset({
+      modoPaciente: 'existente',
+      pacienteId: pacienteId ?? null,
+      fecha: this.selectedDateInput,
+      horaInicio: '',
+      horaFin: '',
+      motivo: '',
+      notas: '',
+      nuevoPaciente: {
+        cedula: '',
+        nombres: '',
+        apellidos: '',
+        fechaNacimiento: '',
+        genero: '',
+        telefono: '',
+        email: ''
+      }
+    });
+
+    this.configurarValidadoresPaciente(this.citaForm, 'existente');
+    this.citaForm.markAsPristine();
+    this.citaForm.markAsUntouched();
+  }
+
+  private crearPayloadCita(pacienteId: number, valores: any): CitaPayload {
+    const motivo = (valores.motivo ?? '').toString().trim();
+    const notas = (valores.notas ?? '').toString().trim();
+    return {
+      pacienteId: Number(pacienteId),
+      fecha: valores.fecha,
+      horaInicio: (valores.horaInicio ?? '').toString().trim(),
+      horaFin: (valores.horaFin ?? '').toString().trim(),
+      motivo: motivo || undefined,
+      notas: notas || undefined
+    };
   }
 
   private refreshAll(): void {

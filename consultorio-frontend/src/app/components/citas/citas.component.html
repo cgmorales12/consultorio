@@ -32,6 +32,115 @@
     </div>
   </header>
 
+  <section class="nueva-cita">
+    <div class="nueva-cita__header">
+      <h3><i class="fas fa-calendar-plus"></i> Programar nueva cita</h3>
+      <p>Registra una cita seleccionando un paciente existente o ingresando uno nuevo en un solo paso.</p>
+    </div>
+
+    <form [formGroup]="citaForm" (ngSubmit)="programarCita()" class="nueva-cita__form">
+      <div class="modo-paciente">
+        <label>
+          <input type="radio" formControlName="modoPaciente" value="existente">
+          Paciente existente
+        </label>
+        <label>
+          <input type="radio" formControlName="modoPaciente" value="nuevo">
+          Paciente nuevo
+        </label>
+      </div>
+
+      <div class="paciente-existente" *ngIf="modoPaciente === 'existente'">
+        <label>
+          Selecciona un paciente
+          <select formControlName="pacienteId" [disabled]="cargandoPacientes">
+            <option [ngValue]="null">Selecciona un paciente</option>
+            <option *ngFor="let paciente of pacientes" [ngValue]="paciente.pacienteId">
+              {{ paciente.nombreCompleto || (paciente.nombres + ' ' + paciente.apellidos) }}
+            </option>
+          </select>
+        </label>
+        <small class="ayuda" *ngIf="cargandoPacientes">Cargando pacientes...</small>
+      </div>
+
+      <div class="nuevo-paciente" formGroupName="nuevoPaciente" *ngIf="modoPaciente === 'nuevo'">
+        <div class="nuevo-paciente-grid">
+          <label>
+            Cédula
+            <input type="text" formControlName="cedula" maxlength="10">
+          </label>
+          <label>
+            Nombres
+            <input type="text" formControlName="nombres">
+          </label>
+          <label>
+            Apellidos
+            <input type="text" formControlName="apellidos">
+          </label>
+          <label>
+            Fecha de nacimiento
+            <input type="date" formControlName="fechaNacimiento">
+          </label>
+          <label>
+            Género
+            <select formControlName="genero">
+              <option value="">Selecciona</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </label>
+          <label>
+            Teléfono
+            <input type="tel" formControlName="telefono">
+          </label>
+          <label>
+            Correo electrónico
+            <input type="email" formControlName="email">
+          </label>
+        </div>
+      </div>
+
+      <div class="cita-datos">
+        <label>
+          Fecha de la cita
+          <input type="date" formControlName="fecha">
+        </label>
+        <label>
+          Hora de inicio
+          <input type="time" formControlName="horaInicio">
+        </label>
+        <label>
+          Hora de fin
+          <input type="time" formControlName="horaFin">
+        </label>
+      </div>
+
+      <div class="cita-detalles">
+        <label>
+          Motivo
+          <input type="text" formControlName="motivo" placeholder="Motivo de la consulta">
+        </label>
+        <label>
+          Notas adicionales
+          <textarea formControlName="notas" rows="2" placeholder="Indicaciones o recordatorios"></textarea>
+        </label>
+      </div>
+
+      <div class="form-feedback" *ngIf="mensajeCitaError || mensajeCitaExito">
+        <p class="mensaje-error" *ngIf="mensajeCitaError">{{ mensajeCitaError }}</p>
+        <p class="mensaje-exito" *ngIf="mensajeCitaExito">{{ mensajeCitaExito }}</p>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-registrar" [disabled]="guardandoCita">
+          <i class="fas" [ngClass]="guardandoCita ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ guardandoCita ? 'Guardando...' : 'Registrar cita' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
   <section class="stats" *ngIf="stats as resumen">
     <div class="stat-card stat-card--total">
       <div class="stat-title">Citas del día</div>

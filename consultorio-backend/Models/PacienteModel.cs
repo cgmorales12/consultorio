@@ -61,6 +61,11 @@ namespace ConsultorioMedico.API.Models
 
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
 
+        // Relaciones
+        public ICollection<HistoriaClinicaModel> HistoriasClinicas { get; set; } = new List<HistoriaClinicaModel>();
+
+        public ICollection<CitaModel> Citas { get; set; } = new List<CitaModel>();
+
         // Propiedades calculadas
         [NotMapped]
         public int Edad

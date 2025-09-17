@@ -46,9 +46,9 @@ export class PacientesComponent implements OnInit {
       direccion: ['', Validators.required],
       estadoCivil: ['', Validators.required],
       ocupacion: [''],
-      contactoEmergenciaNombre: ['', Validators.required],
-      contactoEmergenciaTelefono: ['', Validators.required],
-      contactoEmergenciaRelacion: ['', Validators.required],
+      contactoEmergenciaNombre: [''],
+      contactoEmergenciaTelefono: [''],
+      contactoEmergenciaRelacion: [''],
       alergias: [''],
       medicamentosActuales: [''],
       enfermedadesCronicas: ['']
@@ -104,9 +104,9 @@ export class PacientesComponent implements OnInit {
       direccion: paciente.direccion,
       estadoCivil: paciente.estadoCivil,
       ocupacion: paciente.ocupacion,
-      contactoEmergenciaNombre: paciente.contactoEmergencia.nombre,
-      contactoEmergenciaTelefono: paciente.contactoEmergencia.telefono,
-      contactoEmergenciaRelacion: paciente.contactoEmergencia.relacion,
+      contactoEmergenciaNombre: paciente.contactoEmergencia?.nombre ?? '',
+      contactoEmergenciaTelefono: paciente.contactoEmergencia?.telefono ?? '',
+      contactoEmergenciaRelacion: paciente.contactoEmergencia?.relacion ?? '',
       alergias: paciente.alergias?.join(', '),
       medicamentosActuales: paciente.medicamentosActuales?.join(', '),
       enfermedadesCronicas: paciente.enfermedadesCronicas?.join(', ')
@@ -125,6 +125,8 @@ export class PacientesComponent implements OnInit {
         return;
       }
 
+      const contactoEmergencia = this.obtenerContactoEmergencia(formData);
+
       const paciente: Paciente = {
         id: this.pacienteSeleccionado?.id || '',
         cedula: formData.cedula,
@@ -138,11 +140,7 @@ export class PacientesComponent implements OnInit {
         direccion: formData.direccion,
         estadoCivil: formData.estadoCivil,
         ocupacion: formData.ocupacion,
-        contactoEmergencia: {
-          nombre: formData.contactoEmergenciaNombre,
-          telefono: formData.contactoEmergenciaTelefono,
-          relacion: formData.contactoEmergenciaRelacion
-        },
+        ...(contactoEmergencia ? { contactoEmergencia } : {}),
         alergias: formData.alergias ? formData.alergias.split(',').map((a: string) => a.trim()) : [],
         medicamentosActuales: formData.medicamentosActuales ? formData.medicamentosActuales.split(',').map((m: string) => m.trim()) : [],
         enfermedadesCronicas: formData.enfermedadesCronicas ? formData.enfermedadesCronicas.split(',').map((e: string) => e.trim()) : [],
@@ -200,6 +198,22 @@ export class PacientesComponent implements OnInit {
   // Getter para validación del formulario
   get esFormularioValido(): boolean {
     return this.formularioPaciente.valid;
+  }
+
+  private obtenerContactoEmergencia(formData: any): Paciente['contactoEmergencia'] | null {
+    const nombre = (formData.contactoEmergenciaNombre ?? '').trim();
+    const telefono = (formData.contactoEmergenciaTelefono ?? '').trim();
+    const relacion = (formData.contactoEmergenciaRelacion ?? '').trim();
+
+    if (!nombre && !telefono && !relacion) {
+      return null;
+    }
+
+    return {
+      ...(nombre ? { nombre } : {}),
+      ...(telefono ? { telefono } : {}),
+      ...(relacion ? { relacion } : {})
+    };
   }
 
   // Método para obtener errores de un campo

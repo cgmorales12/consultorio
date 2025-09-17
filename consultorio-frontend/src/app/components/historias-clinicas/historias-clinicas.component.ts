@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs/operators';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize, distinctUntilChanged } from 'rxjs/operators';
 import { HistoriasClinicasService } from '../../services/historias-clinicas.service';
 import { ConsultaMedica, HistoriaClinica, PlantillaConsulta } from '../../models/historia-clinica.model';
+import { PacientesService as PacientesApiService, Paciente as PacienteApi } from '../../services/pacientes';
 
 @Component({
   selector: 'app-historias-clinicas',
@@ -23,13 +24,19 @@ export class HistoriasClinicasComponent implements OnInit {
   bmiClasificacion = '';
   cargandoHistorias = false;
   cargandoPlantillas = false;
+  cargandoPacientes = false;
   guardandoAntecedentes = false;
   guardandoConsulta = false;
+  creandoHistoria = false;
   mensajeError?: string;
+  pacientes: PacienteApi[] = [];
+  pacienteControl = new FormControl<number | null>(null);
+  pacienteFiltradoId: number | null = null;
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly historiasService: HistoriasClinicasService
+    private readonly historiasService: HistoriasClinicasService,
+    private readonly pacientesService: PacientesApiService
   ) {
     this.antecedentesForm = this.fb.group({
       antecedentesPersonales: [''],
@@ -61,31 +68,48 @@ export class HistoriasClinicasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarPlantillas();
+    this.cargarPacientes();
     this.cargarHistorias();
+
+    this.pacienteControl.valueChanges
+      .pipe(distinctUntilChanged())
+      .subscribe((pacienteId) => {
+        this.cargarHistorias(pacienteId ?? undefined);
+      });
 
     this.consultaForm.get('pesoKg')?.valueChanges.subscribe(() => this.actualizarImc());
     this.consultaForm.get('estaturaCm')?.valueChanges.subscribe(() => this.actualizarImc());
     this.consultaForm.get('plantillaId')?.valueChanges.subscribe((id) => this.aplicarPlantilla(id));
   }
 
-  cargarHistorias(): void {
+  cargarHistorias(pacienteId?: number): void {
+    this.pacienteFiltradoId = pacienteId ?? null;
     this.cargandoHistorias = true;
     this.mensajeError = undefined;
 
-    this.historiasService.obtenerHistorias()
+    this.historiasService.obtenerHistorias(pacienteId)
       .pipe(finalize(() => (this.cargandoHistorias = false)))
       .subscribe({
         next: (historias) => {
           this.historias = historias;
 
-          if (!this.historiaSeleccionada && historias.length > 0) {
-            this.seleccionarHistoria(historias[0]);
-          } else if (this.historiaSeleccionada) {
+          if (historias.length === 0) {
+            this.historiaSeleccionada = null;
+            this.alertasConsulta = [];
+            this.bmiActual = null;
+            this.bmiClasificacion = '';
+            return;
+          }
+
+          if (this.historiaSeleccionada) {
             const actualizada = historias.find(h => h.historiaClinicaId === this.historiaSeleccionada!.historiaClinicaId);
             if (actualizada) {
               this.seleccionarHistoria(actualizada);
+              return;
             }
           }
+
+          this.seleccionarHistoria(historias[0]);
         },
         error: (error) => {
           console.error('No se pudieron cargar las historias clínicas', error);
@@ -101,6 +125,51 @@ export class HistoriasClinicasComponent implements OnInit {
       .subscribe({
         next: (plantillas) => (this.plantillas = plantillas),
         error: (error) => console.error('No se pudieron cargar las plantillas de consulta', error)
+      });
+  }
+
+  cargarPacientes(): void {
+    this.cargandoPacientes = true;
+    this.pacientesService.obtenerPacientes()
+      .pipe(finalize(() => (this.cargandoPacientes = false)))
+      .subscribe({
+        next: (response) => {
+          const data = Array.isArray(response.data) ? (response.data as PacienteApi[]) : [];
+          this.pacientes = data;
+        },
+        error: (error) => {
+          console.error('No se pudieron cargar los pacientes', error);
+          this.pacientes = [];
+        }
+      });
+  }
+
+  crearHistoriaParaPaciente(): void {
+    const pacienteId = this.pacienteControl.value;
+    if (!pacienteId) {
+      return;
+    }
+
+    const existente = this.historias.find(h => h.pacienteId === pacienteId);
+    if (existente) {
+      this.seleccionarHistoria(existente);
+      return;
+    }
+
+    this.creandoHistoria = true;
+    this.mensajeError = undefined;
+
+    this.historiasService.crearHistoria({ pacienteId })
+      .pipe(finalize(() => (this.creandoHistoria = false)))
+      .subscribe({
+        next: (historia) => {
+          this.actualizarListado(historia);
+          this.seleccionarHistoria(historia);
+        },
+        error: (error) => {
+          console.error('No se pudo crear la historia clínica', error);
+          this.mensajeError = 'No se pudo crear la historia clínica para el paciente seleccionado.';
+        }
       });
   }
 

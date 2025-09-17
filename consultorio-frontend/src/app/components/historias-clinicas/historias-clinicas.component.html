@@ -6,6 +6,29 @@
     </div>
 
     <div class="sidebar-content">
+      <div class="paciente-selector">
+        <label for="pacienteSelect">Paciente</label>
+        <select
+          id="pacienteSelect"
+          [formControl]="pacienteControl"
+          [disabled]="cargandoPacientes"
+        >
+          <option [ngValue]="null">Todos los pacientes</option>
+          <option *ngFor="let paciente of pacientes" [ngValue]="paciente.pacienteId">
+            {{ paciente.nombreCompleto || (paciente.nombres + ' ' + paciente.apellidos) }}
+          </option>
+        </select>
+        <button
+          type="button"
+          class="crear-historia"
+          (click)="crearHistoriaParaPaciente()"
+          [disabled]="creandoHistoria || !pacienteControl.value"
+        >
+          <i class="fas" [ngClass]="creandoHistoria ? 'fa-spinner fa-spin' : 'fa-file-medical'"></i>
+          {{ creandoHistoria ? 'Creando...' : 'Crear historia' }}
+        </button>
+      </div>
+
       <div *ngIf="cargandoHistorias" class="sidebar-loading">
         <i class="fas fa-spinner fa-spin"></i>
         <span>Cargando historias...</span>
@@ -33,8 +56,14 @@
       <ng-template #sinHistorias>
         <div class="sidebar-empty">
           <i class="fas fa-clipboard-list"></i>
-          <p>No hay historias clínicas registradas.</p>
-          <p class="hint">Crea pacientes y registra su primera consulta para iniciar la historia.</p>
+          <ng-container *ngIf="pacienteFiltradoId; else sinFiltro">
+            <p>No hay historia clínica registrada para el paciente seleccionado.</p>
+            <p class="hint">Crea una nueva historia para comenzar a registrar sus consultas.</p>
+          </ng-container>
+          <ng-template #sinFiltro>
+            <p>No hay historias clínicas registradas.</p>
+            <p class="hint">Crea pacientes y registra su primera consulta para iniciar la historia.</p>
+          </ng-template>
         </div>
       </ng-template>
     </div>

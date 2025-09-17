@@ -12,10 +12,10 @@ export interface Paciente {
   direccion: string;
   estadoCivil: string;
   ocupacion?: string;
-  contactoEmergencia: {
-    nombre: string;
-    telefono: string;
-    relacion: string;
+  contactoEmergencia?: {
+    nombre?: string;
+    telefono?: string;
+    relacion?: string;
   };
   seguroMedico?: string;
   alergias?: string[];
