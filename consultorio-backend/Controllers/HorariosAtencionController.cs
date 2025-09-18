@@ -44,11 +44,6 @@ namespace ConsultorioMedico.API.Controllers
             }
 
             var payloads = request.Horarios?.ToList() ?? new List<HorarioAtencionPayload>();
-            if (payloads.Count == 0)
-            {
-                ModelState.AddModelError(nameof(request.Horarios), "Debes indicar al menos un horario de atención.");
-                return BadRequest(ModelState);
-            }
 
             if (!TryMapPayloads(payloads, out var modelos, out var errores))
             {

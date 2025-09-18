@@ -63,8 +63,10 @@
               *ngFor="let dia of semana"
               class="calendario-mensual__dia"
               [class.calendario-mensual__dia--fuera]="!dia.inMonth"
+              [class.calendario-mensual__dia--disponible]="dia.inMonth && !dia.isSelected"
               [class.calendario-mensual__dia--seleccionado]="dia.isSelected"
               [class.calendario-mensual__dia--hoy]="dia.isToday"
+              [attr.aria-pressed]="dia.isSelected"
               (click)="dia.inMonth && toggleDia(dia.iso)"
             >
               <span class="calendario-mensual__numero">{{ dia.date.getDate() }}</span>
@@ -111,6 +113,10 @@
             </div>
           </div>
         </div>
+
+        <p class="horario-dias__nota" *ngIf="diasSeleccionadosControls.length">
+          Puedes editar las horas directamente en los campos, guardar los cambios o eliminar un día con el icono de cierre.
+        </p>
 
         <div class="horarios-atencion__feedback" *ngIf="mensajeHorarioError || mensajeHorarioExito">
           <span class="mensaje-error" *ngIf="mensajeHorarioError">{{ mensajeHorarioError }}</span>

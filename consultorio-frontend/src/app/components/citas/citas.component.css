@@ -199,22 +199,28 @@
 }
 
 .calendario-mensual__dia--fuera {
-  opacity: 0.25;
+  opacity: 0.3;
   cursor: default;
+  background: #eef2ff;
+  color: #9aa5b1;
 }
 
-.calendario-mensual__dia--hoy:not(.calendario-mensual__dia--seleccionado) {
-  box-shadow: inset 0 0 0 2px rgba(102, 126, 234, 0.4);
+.calendario-mensual__dia--disponible {
+  background: #bbf7d0;
+  color: #14532d;
+}
+
+.calendario-mensual__dia--disponible:hover {
+  background: #86efac;
 }
 
 .calendario-mensual__dia--seleccionado {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #f87171;
   color: #ffffff;
-  box-shadow: 0 8px 18px rgba(118, 75, 162, 0.35);
 }
 
-.calendario-mensual__dia:not(.calendario-mensual__dia--fuera):hover {
-  background: rgba(102, 126, 234, 0.12);
+.calendario-mensual__dia--seleccionado:hover {
+  background: #ef4444;
 }
 
 .calendario-mensual__numero {
@@ -243,6 +249,10 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  max-height: 18.5rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  overscroll-behavior: contain;
 }
 
 .horario-dias__empty {
@@ -325,6 +335,12 @@
   background: #fdecef;
   border-radius: 12px;
   padding: 0.5rem 0.75rem;
+}
+
+.horario-dias__nota {
+  margin-top: -0.5rem;
+  font-size: 0.8rem;
+  color: #4d5d7a;
 }
 
 .horarios-atencion__feedback {
