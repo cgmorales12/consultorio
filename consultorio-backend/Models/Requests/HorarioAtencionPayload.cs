@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace ConsultorioMedico.API.Models.Requests
@@ -6,20 +7,18 @@ namespace ConsultorioMedico.API.Models.Requests
     public class HorarioAtencionPayload
     {
         [Required]
-        [Required]
-        public DateTime InicioAtencion { get; set; }
+        public DateTime Fecha { get; set; }
 
         [Required]
-        public DateTime FinAtencion { get; set; }
+        public string HoraInicio { get; set; } = string.Empty;
 
-        public DateTime? InicioFeriado { get; set; }
-
-        public DateTime? FinFeriado { get; set; }
+        [Required]
+        public string HoraFin { get; set; } = string.Empty;
     }
 
-    public class ActualizarHorarioAtencionRequest
+    public class ActualizarHorariosAtencionRequest
     {
         [Required]
-        public HorarioAtencionPayload Horario { get; set; } = new();
+        public IEnumerable<HorarioAtencionPayload> Horarios { get; set; } = new List<HorarioAtencionPayload>();
     }
 }

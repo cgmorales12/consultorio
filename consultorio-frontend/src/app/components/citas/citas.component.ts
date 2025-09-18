@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Observable, Subject, interval } from 'rxjs';
 import { finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AgendaSemanalDia, Cita, CitaPayload, DailyStats, EstadoCita } from '../../models/cita.model';
@@ -20,6 +20,14 @@ type QuickAction = {
 };
 
 type ModoPaciente = 'existente' | 'nuevo';
+
+type CalendarioDia = {
+  date: Date;
+  iso: string;
+  inMonth: boolean;
+  isSelected: boolean;
+  isToday: boolean;
+};
 
 @Component({
   selector: 'app-citas',
@@ -44,12 +52,16 @@ export class CitasComponent implements OnInit, OnDestroy {
   allAppointments: Cita[] = [];
   stats: DailyStats | null = null;
   availableSlots: { start: string; end: string }[] = [];
-  horario?: HorarioAtencion;
+  horarios: HorarioAtencion[] = [];
+  horariosPorFecha = new Map<string, HorarioAtencion>();
 
-  horarioForm: FormGroup;
+  horariosForm: FormGroup;
   guardandoHorarios = false;
   mensajeHorarioExito?: string;
   mensajeHorarioError?: string;
+  calendarioActual = new Date();
+  semanasCalendario: CalendarioDia[][] = [];
+  diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   loadingDaily = false;
   loadingWeekly = false;
@@ -83,16 +95,21 @@ export class CitasComponent implements OnInit, OnDestroy {
     private readonly horariosService: HorariosService
   ) {
     this.citaForm = this.crearFormularioCita();
-    this.horarioForm = this.fb.group({
-      inicioAtencion: ['', Validators.required],
-      finAtencion: ['', Validators.required],
-      inicioFeriado: [''],
-      finFeriado: ['']
+    this.horariosForm = this.fb.group({
+      dias: this.fb.array<FormGroup>([])
     });
+
+    this.diasFormArray.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.sincronizarHorariosLocales(false);
+        this.updateAvailableSlots();
+      });
   }
 
   ngOnInit(): void {
     this.cargarPacientes();
+    this.generarCalendario();
     this.cargarHorarios();
     this.refreshAll();
     interval(30000)
@@ -140,6 +157,19 @@ export class CitasComponent implements OnInit, OnDestroy {
 
   get nuevoPacienteForm(): FormGroup {
     return this.citaForm.get('nuevoPaciente') as FormGroup;
+  }
+
+  get diasFormArray(): FormArray<FormGroup> {
+    return this.horariosForm.get('dias') as FormArray<FormGroup>;
+  }
+
+  get diasSeleccionadosControls(): FormGroup[] {
+    return this.diasFormArray.controls as FormGroup[];
+  }
+
+  get etiquetaMesActual(): string {
+    const etiqueta = this.calendarioActual.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1);
   }
 
   setView(view: VistaCitas): void {
@@ -265,41 +295,37 @@ export class CitasComponent implements OnInit, OnDestroy {
 
   cargarHorarios(): void {
     this.mensajeHorarioError = undefined;
-    this.horariosService.obtenerHorario().subscribe({
-      next: horario => {
-        this.horario = {
-          ...horario,
-          inicioFeriado: horario.inicioFeriado ?? null,
-          finFeriado: horario.finFeriado ?? null
-        };
-        this.horarioForm.patchValue({
-          inicioAtencion: this.toDateTimeInput(this.horario.inicioAtencion),
-          finAtencion: this.toDateTimeInput(this.horario.finAtencion),
-          inicioFeriado: this.horario.inicioFeriado ? this.toDateTimeInput(this.horario.inicioFeriado) : '',
-          finFeriado: this.horario.finFeriado ? this.toDateTimeInput(this.horario.finFeriado) : ''
-        });
-        this.horarioForm.markAsPristine();
-        this.horarioForm.markAsUntouched();
-        this.updateAvailableSlots();
+    this.horariosService.obtenerHorarios().subscribe({
+      next: horarios => {
+        this.establecerHorarios(horarios);
       },
       error: error => {
-        console.error('No se pudieron cargar el horario de atención', error);
-        this.horario = undefined;
-        const ahora = new Date();
-        const inicioDefault = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 8, 0, 0);
-        const finDefault = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 17, 0, 0);
-        this.horarioForm.reset({
-          inicioAtencion: this.toDateTimeInput(inicioDefault),
-          finAtencion: this.toDateTimeInput(finDefault),
-          inicioFeriado: '',
-          finFeriado: ''
-        });
-        this.horarioForm.markAsPristine();
-        this.horarioForm.markAsUntouched();
-        this.availableSlots = [];
-        this.mensajeHorarioError = 'No se pudieron cargar el horario de atención.';
+        console.error('No se pudieron cargar los horarios de atención', error);
+        this.establecerHorarios([]);
+        this.mensajeHorarioError = 'No se pudieron cargar los horarios de atención.';
       }
     });
+  }
+
+  private establecerHorarios(horarios: HorarioAtencion[]): void {
+    const ordenados = [...horarios].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    this.horarios = ordenados;
+    this.diasFormArray.clear();
+
+    ordenados.forEach(horario => {
+      this.diasFormArray.push(
+        this.crearHorarioDiaGroup(horario.fecha, horario.horaInicio, horario.horaFin, horario.horarioAtencionId)
+      );
+    });
+
+    this.horariosForm.markAsPristine();
+    this.horariosForm.markAsUntouched();
+    if (ordenados.length) {
+      this.calendarioActual = new Date(`${ordenados[0].fecha}T00:00:00`);
+    }
+    this.sincronizarHorariosLocales();
+    this.generarCalendario();
+    this.updateAvailableSlots();
   }
 
   cargarPacientes(seleccionarId?: number): void {
@@ -441,103 +467,208 @@ export class CitasComponent implements OnInit, OnDestroy {
     this.mensajeHorarioExito = undefined;
     this.mensajeHorarioError = undefined;
 
-    if (this.horarioForm.invalid) {
-      this.horarioForm.markAllAsTouched();
-      this.mensajeHorarioError = 'Revisa los campos del horario de atención.';
+    if (!this.diasSeleccionadosControls.length) {
+      this.mensajeHorarioError = 'Selecciona al menos un día de atención antes de guardar.';
       return;
     }
 
-    const valores = this.horarioForm.getRawValue();
-    const inicioAtencion = (valores.inicioAtencion ?? '').toString().trim();
-    const finAtencion = (valores.finAtencion ?? '').toString().trim();
-    const inicioFeriado = (valores.inicioFeriado ?? '').toString().trim();
-    const finFeriado = (valores.finFeriado ?? '').toString().trim();
-
-    if (!inicioAtencion || !finAtencion) {
-      this.mensajeHorarioError = 'Debes indicar la fecha y hora de inicio y fin de atención.';
+    if (this.horariosForm.invalid) {
+      this.horariosForm.markAllAsTouched();
+      this.mensajeHorarioError = 'Revisa los días seleccionados y corrige los horarios.';
       return;
     }
 
-    if ((inicioFeriado && !finFeriado) || (!inicioFeriado && finFeriado)) {
-      this.mensajeHorarioError = 'Para configurar un feriado debes indicar tanto la fecha inicial como la final.';
-      return;
-    }
-
-    const horarioPayload: HorarioAtencionPayload = {
-      inicioAtencion: this.ensureSeconds(inicioAtencion),
-      finAtencion: this.ensureSeconds(finAtencion),
-      inicioFeriado: inicioFeriado ? this.ensureSeconds(inicioFeriado) : null,
-      finFeriado: finFeriado ? this.ensureSeconds(finFeriado) : null
-    };
+    const horarioPayload: HorarioAtencionPayload[] = this.diasSeleccionadosControls.map(ctrl => ({
+      fecha: (ctrl.get('fecha')?.value ?? '').toString(),
+      horaInicio: (ctrl.get('horaInicio')?.value ?? '').toString(),
+      horaFin: (ctrl.get('horaFin')?.value ?? '').toString()
+    }));
 
     this.guardandoHorarios = true;
 
     this.horariosService
-      .guardarHorario(horarioPayload)
+      .guardarHorarios(horarioPayload)
       .pipe(finalize(() => (this.guardandoHorarios = false)))
       .subscribe({
-        next: horario => {
-          this.horario = {
-            ...horario,
-            inicioFeriado: horario.inicioFeriado ?? null,
-            finFeriado: horario.finFeriado ?? null
-          };
-          this.mensajeHorarioExito = 'Horario actualizado correctamente.';
-          this.horarioForm.patchValue({
-            inicioAtencion: this.toDateTimeInput(this.horario.inicioAtencion),
-            finAtencion: this.toDateTimeInput(this.horario.finAtencion),
-            inicioFeriado: this.horario.inicioFeriado ? this.toDateTimeInput(this.horario.inicioFeriado) : '',
-            finFeriado: this.horario.finFeriado ? this.toDateTimeInput(this.horario.finFeriado) : ''
-          });
-          this.horarioForm.markAsPristine();
-          this.horarioForm.markAsUntouched();
-          this.updateAvailableSlots();
+        next: horarios => {
+          this.mensajeHorarioExito = 'Horarios actualizados correctamente.';
+          this.establecerHorarios(horarios);
         },
         error: error => {
-          console.error('No se pudo guardar el horario de atención', error);
-          this.mensajeHorarioError = 'No se pudo guardar el horario de atención. Intenta nuevamente.';
+          console.error('No se pudieron guardar los horarios de atención', error);
+          this.mensajeHorarioError = 'No se pudieron guardar los horarios de atención. Intenta nuevamente.';
         }
       });
   }
 
-  get horarioResumen(): string | null {
-    const inicio = this.parseDateTimeControlValue('inicioAtencion');
-    const fin = this.parseDateTimeControlValue('finAtencion');
+  cambiarMes(offset: number): void {
+    const nuevoMes = new Date(this.calendarioActual);
+    nuevoMes.setMonth(nuevoMes.getMonth() + offset);
+    this.calendarioActual = nuevoMes;
+    this.generarCalendario();
+  }
 
-    if (!inicio || !fin) {
+  toggleDia(fechaIso: string): void {
+    const indexExistente = this.diasSeleccionadosControls.findIndex(
+      control => (control.get('fecha')?.value ?? '') === fechaIso
+    );
+
+    if (indexExistente >= 0) {
+      this.diasFormArray.removeAt(indexExistente);
+    } else {
+      const horarioPrevio = this.horariosPorFecha.get(fechaIso);
+      const horaInicio = horarioPrevio?.horaInicio ?? '08:00';
+      const horaFin = horarioPrevio?.horaFin ?? '17:00';
+      const grupo = this.crearHorarioDiaGroup(fechaIso, horaInicio, horaFin, horarioPrevio?.horarioAtencionId);
+      const indiceInsercion = this.encontrarIndiceInsercion(fechaIso);
+      this.diasFormArray.insert(indiceInsercion, grupo);
+    }
+
+    this.sincronizarHorariosLocales();
+    this.updateAvailableSlots();
+  }
+
+  eliminarDia(index: number): void {
+    this.diasFormArray.removeAt(index);
+    this.sincronizarHorariosLocales();
+    this.updateAvailableSlots();
+  }
+
+  formatSelectedDate(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    const texto = date.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  private crearHorarioDiaGroup(
+    fecha: string,
+    horaInicio: string,
+    horaFin: string,
+    horarioAtencionId?: number | null
+  ): FormGroup {
+    return this.fb.group(
+      {
+        horarioAtencionId: [horarioAtencionId ?? null],
+        fecha: [fecha, Validators.required],
+        horaInicio: [horaInicio, [Validators.required, this.validarIntervaloTreinta]],
+        horaFin: [horaFin, [Validators.required, this.validarIntervaloTreinta]]
+      },
+      { validators: this.validarRangoHoras }
+    );
+  }
+
+  private encontrarIndiceInsercion(fecha: string): number {
+    const controles = this.diasSeleccionadosControls;
+    for (let i = 0; i < controles.length; i++) {
+      const existente = (controles[i].get('fecha')?.value ?? '').toString();
+      if (existente.localeCompare(fecha) > 0) {
+        return i;
+      }
+    }
+    return controles.length;
+  }
+
+  private sincronizarHorariosLocales(regenerarCalendario = true): void {
+    this.horariosPorFecha.clear();
+    this.diasSeleccionadosControls.forEach(control => {
+      const fecha = (control.get('fecha')?.value ?? '').toString();
+      if (!fecha) {
+        return;
+      }
+
+      this.horariosPorFecha.set(fecha, {
+        horarioAtencionId: Number(control.get('horarioAtencionId')?.value ?? 0),
+        fecha,
+        horaInicio: (control.get('horaInicio')?.value ?? '').toString(),
+        horaFin: (control.get('horaFin')?.value ?? '').toString()
+      });
+    });
+
+    if (regenerarCalendario) {
+      this.generarCalendario();
+    }
+  }
+
+  private generarCalendario(): void {
+    const referencia = new Date(this.calendarioActual.getFullYear(), this.calendarioActual.getMonth(), 1);
+    const primerDiaSemana = (referencia.getDay() + 6) % 7; // Ajuste para iniciar en lunes
+    const inicio = new Date(referencia);
+    inicio.setDate(referencia.getDate() - primerDiaSemana);
+
+    const semanas: CalendarioDia[][] = [];
+    for (let semana = 0; semana < 6; semana++) {
+      const dias: CalendarioDia[] = [];
+      for (let dia = 0; dia < 7; dia++) {
+        const fecha = new Date(inicio);
+        const iso = this.toDateString(fecha);
+        dias.push({
+          date: new Date(fecha),
+          iso,
+          inMonth: fecha.getMonth() === this.calendarioActual.getMonth(),
+          isSelected: this.horariosPorFecha.has(iso),
+          isToday: this.esHoy(fecha)
+        });
+        inicio.setDate(inicio.getDate() + 1);
+      }
+      semanas.push(dias);
+    }
+
+    this.semanasCalendario = semanas;
+  }
+
+  private esHoy(date: Date): boolean {
+    const hoy = new Date();
+    return (
+      date.getFullYear() === hoy.getFullYear() &&
+      date.getMonth() === hoy.getMonth() &&
+      date.getDate() === hoy.getDate()
+    );
+  }
+
+  private validarIntervaloTreinta = (control: AbstractControl): ValidationErrors | null => {
+    const value = (control.value ?? '').toString();
+    if (!value) {
       return null;
     }
 
-    const inicioLabel = this.formatDateTimeDisplay(inicio);
-    const finLabel = this.formatDateTimeDisplay(fin);
-
-    let resumen = `El consultorio atiende en horario recorrido desde ${inicioLabel} hasta ${finLabel}.`;
-
-    const inicioFeriado = this.parseDateTimeControlValue('inicioFeriado');
-    const finFeriado = this.parseDateTimeControlValue('finFeriado');
-
-    if (inicioFeriado && finFeriado) {
-      resumen += ` Durante el feriado no habrá atención desde ${this.formatDateTimeDisplay(inicioFeriado)} hasta ${this.formatDateTimeDisplay(finFeriado)}.`;
+    const minutos = this.toMinutes(value);
+    if (minutos % 30 !== 0) {
+      return { intervaloInvalido: true };
     }
 
-    return resumen;
-  }
+    return null;
+  };
 
-  get inicioAtencionDetalle(): string | null {
-    return this.getHorarioDetalle('inicioAtencion');
-  }
+  private validarRangoHoras = (control: AbstractControl): ValidationErrors | null => {
+    const horaInicio = (control.get('horaInicio')?.value ?? '').toString();
+    const horaFin = (control.get('horaFin')?.value ?? '').toString();
 
-  get finAtencionDetalle(): string | null {
-    return this.getHorarioDetalle('finAtencion');
-  }
+    if (!horaInicio || !horaFin) {
+      return null;
+    }
 
-  get inicioFeriadoDetalle(): string | null {
-    return this.getHorarioDetalle('inicioFeriado');
-  }
+    const inicio = this.toMinutes(horaInicio);
+    const fin = this.toMinutes(horaFin);
 
-  get finFeriadoDetalle(): string | null {
-    return this.getHorarioDetalle('finFeriado');
-  }
+    if (fin <= inicio || fin - inicio < 30 || fin % 30 !== 0 || inicio % 30 !== 0) {
+      return { rangoInvalido: true };
+    }
+
+    return null;
+  };
 
   executeAction(cita: Cita, action: QuickAction): void {
     this.updating.add(cita.citaId);
@@ -771,114 +902,6 @@ export class CitasComponent implements OnInit, OnDestroy {
     return date.toISOString().split('T')[0];
   }
 
-  private toDateTimeInput(value: string | Date | null | undefined): string {
-    if (!value) {
-      return '';
-    }
-
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
-    const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return adjusted.toISOString().slice(0, 16);
-  }
-
-  private ensureSeconds(value: string): string {
-    if (!value) {
-      return value;
-    }
-
-    return value.length === 16 ? `${value}:00` : value;
-  }
-
-  private parseDateValue(value: string | null | undefined): Date | null {
-    if (!value) {
-      return null;
-    }
-
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  private parseDateTimeControlValue(controlName: string): Date | null {
-    const raw = (this.horarioForm.get(controlName)?.value ?? '').toString().trim();
-    return this.parseDateValue(raw);
-  }
-
-  private formatDateTimeDisplay(date: Date): string {
-    const fecha = date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-    const hora = date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-
-    const capitalizada = fecha.charAt(0).toUpperCase() + fecha.slice(1);
-    return `${capitalizada} a las ${hora}`;
-  }
-
-  private formatDateTimeDetail(date: Date): string {
-    const fecha = date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-    const hora = date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-
-    const capitalizada = fecha.charAt(0).toUpperCase() + fecha.slice(1);
-    return `${capitalizada}, ${hora}`;
-  }
-
-  private getHorarioDetalle(controlName: string): string | null {
-    const valor = this.parseDateTimeControlValue(controlName);
-    return valor ? this.formatDateTimeDetail(valor) : null;
-  }
-
-  private startOfDay(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  }
-
-  private isSameDay(a: Date, b: Date): boolean {
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  }
-
-  private formatTimeFromDate(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  private estaEnFeriado(dia: Date): boolean {
-    if (!this.horario?.inicioFeriado || !this.horario?.finFeriado) {
-      return false;
-    }
-
-    const inicio = this.parseDateValue(this.horario.inicioFeriado);
-    const fin = this.parseDateValue(this.horario.finFeriado);
-
-    if (!inicio || !fin) {
-      return false;
-    }
-
-    const objetivo = this.startOfDay(dia);
-    const inicioFeriado = this.startOfDay(inicio);
-    const finFeriado = this.startOfDay(fin);
-
-    return objetivo.getTime() >= inicioFeriado.getTime() && objetivo.getTime() <= finFeriado.getTime();
-  }
-
   private calculateAvailableSlots(citas: Cita[]): { start: string; end: string }[] {
     const rango = this.obtenerRangoParaDia(this.selectedDate);
     if (!rango) {
@@ -930,54 +953,25 @@ export class CitasComponent implements OnInit, OnDestroy {
   }
 
   private obtenerRangoParaDia(date: Date): { horaInicio: string; horaFin: string } | null {
-    if (!this.horario) {
+    const fecha = this.toDateString(date);
+    const horario = this.horariosPorFecha.get(fecha);
+
+    if (!horario) {
       return null;
     }
 
-    const inicioAtencion = this.parseDateValue(this.horario.inicioAtencion);
-    const finAtencion = this.parseDateValue(this.horario.finAtencion);
+    const horaInicio = this.normalizarHora(horario.horaInicio);
+    const horaFin = this.normalizarHora(horario.horaFin);
 
-    if (!inicioAtencion || !finAtencion) {
+    if (!horaInicio || !horaFin) {
       return null;
-    }
-
-    const dia = this.startOfDay(date);
-    const diaInicio = this.startOfDay(inicioAtencion);
-    const diaFin = this.startOfDay(finAtencion);
-
-    if (dia.getTime() < diaInicio.getTime() || dia.getTime() > diaFin.getTime()) {
-      return null;
-    }
-
-    if (this.estaEnFeriado(dia)) {
-      return null;
-    }
-
-    let horaInicio = this.formatTimeFromDate(inicioAtencion);
-    let horaFin = this.formatTimeFromDate(finAtencion);
-
-    if (this.isSameDay(diaInicio, diaFin)) {
-      if (!this.isSameDay(dia, diaInicio)) {
-        return null;
-      }
-    } else {
-      if (!this.isSameDay(dia, diaInicio)) {
-        horaInicio = this.formatTimeFromDate(inicioAtencion);
-      }
-
-      if (!this.isSameDay(dia, diaFin)) {
-        horaFin = this.formatTimeFromDate(finAtencion);
-      }
     }
 
     if (this.toMinutes(horaFin) <= this.toMinutes(horaInicio)) {
       return null;
     }
 
-    return {
-      horaInicio: this.normalizarHora(horaInicio),
-      horaFin: this.normalizarHora(horaFin)
-    };
+    return { horaInicio, horaFin };
   }
 
   private normalizarHora(time: string): string {

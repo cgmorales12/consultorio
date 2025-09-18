@@ -1,6 +1,8 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
 using ConsultorioMedico.API.Data;
 using ConsultorioMedico.API.Models;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
@@ -122,18 +124,19 @@ try
 
         if (!context.HorariosAtencion.Any())
         {
-            var inicioAtencion = DateTime.Today.AddHours(8);
-            var finAtencion = DateTime.Today.AddMonths(1).Date.AddHours(17);
-
-            var horario = new HorarioAtencionModel
+            var hoy = DateTime.Today;
+            var offsetLunes = ((int)hoy.DayOfWeek + 6) % 7;
+            var lunes = hoy.AddDays(-offsetLunes);
+            var horariosIniciales = Enumerable.Range(0, 5).Select(dia => new HorarioAtencionModel
             {
-                InicioAtencion = DateTime.SpecifyKind(inicioAtencion, DateTimeKind.Unspecified),
-                FinAtencion = DateTime.SpecifyKind(finAtencion, DateTimeKind.Unspecified)
-            };
+                Fecha = DateTime.SpecifyKind(lunes.AddDays(dia), DateTimeKind.Unspecified),
+                HoraInicio = new TimeSpan(8, 0, 0),
+                HoraFin = new TimeSpan(17, 0, 0)
+            });
 
-            context.HorariosAtencion.Add(horario);
+            context.HorariosAtencion.AddRange(horariosIniciales);
             context.SaveChanges();
-            Console.WriteLine("Horario de atención inicial creado.");
+            Console.WriteLine("Horarios de atención iniciales creados.");
         }
 
         Console.WriteLine("Base de datos verificada/creada exitosamente.");

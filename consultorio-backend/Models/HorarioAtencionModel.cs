@@ -9,13 +9,13 @@ namespace ConsultorioMedico.API.Models
         public int HorarioAtencionId { get; set; }
 
         [Required]
-        public DateTime InicioAtencion { get; set; }
+        [Required]
+        public DateTime Fecha { get; set; }
 
         [Required]
-        public DateTime FinAtencion { get; set; }
+        public TimeSpan HoraInicio { get; set; }
 
-        public DateTime? InicioFeriado { get; set; }
-
-        public DateTime? FinFeriado { get; set; }
+        [Required]
+        public TimeSpan HoraFin { get; set; }
     }
 }

@@ -115,15 +115,15 @@ namespace ConsultorioMedico.API.Controllers
                 .Where(horas => horas > 0)
                 .Sum();
 
-            var horarioGeneral = await ObtenerHorarioConfigurado();
+            var horarioDia = await ObtenerHorarioParaDia(fecha);
             var horasJornada = 0.0;
 
-            if (horarioGeneral != null)
+            if (horarioDia != null)
             {
-                var rangoDia = ObtenerRangoDia(horarioGeneral, fecha);
-                if (rangoDia.HasValue)
+                var duracion = horarioDia.HoraFin - horarioDia.HoraInicio;
+                if (duracion > TimeSpan.Zero)
                 {
-                    horasJornada = Math.Max(0, (rangoDia.Value.Fin - rangoDia.Value.Inicio).TotalHours);
+                    horasJornada = Math.Max(0, duracion.TotalHours);
                 }
             }
 
@@ -312,80 +312,17 @@ namespace ConsultorioMedico.API.Controllers
             return new DateTime(hora.Ticks).ToString("HH:mm");
         }
 
-        private async Task<HorarioAtencionModel?> ObtenerHorarioConfigurado()
-        {
-            return await _context.HorariosAtencion.FirstOrDefaultAsync();
-        }
-
-        private static (TimeSpan Inicio, TimeSpan Fin)? ObtenerRangoDia(HorarioAtencionModel horario, DateTime fecha)
+        private async Task<HorarioAtencionModel?> ObtenerHorarioParaDia(DateTime fecha)
         {
             var dia = fecha.Date;
-            var inicio = horario.InicioAtencion.Date;
-            var fin = horario.FinAtencion.Date;
-
-            if (dia < inicio || dia > fin)
-            {
-                return null;
-            }
-
-            if (EstaDentroDeFeriado(horario, dia))
-            {
-                return null;
-            }
-
-            var inicioDia = horario.InicioAtencion.TimeOfDay;
-            var finDia = horario.FinAtencion.TimeOfDay;
-
-            if (inicio == fin)
-            {
-                if (dia != inicio || finDia <= inicioDia)
-                {
-                    return null;
-                }
-
-                return (inicioDia, finDia);
-            }
-
-            if (dia == inicio)
-            {
-                inicioDia = horario.InicioAtencion.TimeOfDay;
-            }
-
-            if (dia == fin)
-            {
-                finDia = horario.FinAtencion.TimeOfDay;
-            }
-
-            if (finDia <= inicioDia)
-            {
-                return null;
-            }
-
-            return (inicioDia, finDia);
+            return await _context.HorariosAtencion
+                .AsNoTracking()
+                .FirstOrDefaultAsync(h => h.Fecha == dia);
         }
 
-        private static bool EstaDentroDelRango(HorarioAtencionModel horario, DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin)
+        private static bool EstaDentroDelHorario(HorarioAtencionModel horario, TimeSpan horaInicio, TimeSpan horaFin)
         {
-            var rango = ObtenerRangoDia(horario, fecha);
-            if (!rango.HasValue)
-            {
-                return false;
-            }
-
-            return horaInicio >= rango.Value.Inicio && horaFin <= rango.Value.Fin;
-        }
-
-        private static bool EstaDentroDeFeriado(HorarioAtencionModel horario, DateTime dia)
-        {
-            if (!horario.InicioFeriado.HasValue || !horario.FinFeriado.HasValue)
-            {
-                return false;
-            }
-
-            var inicioFeriado = horario.InicioFeriado.Value.Date;
-            var finFeriado = horario.FinFeriado.Value.Date;
-
-            return dia >= inicioFeriado && dia <= finFeriado;
+            return horaInicio >= horario.HoraInicio && horaFin <= horario.HoraFin;
         }
 
         private async Task<bool> ExisteConflictoHorario(DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, int? excluirId)
@@ -419,14 +356,14 @@ namespace ConsultorioMedico.API.Controllers
                 return BadRequest(new { message = "Cada cita debe durar exactamente 30 minutos." });
             }
 
-            var horario = await ObtenerHorarioConfigurado();
+            var horario = await ObtenerHorarioParaDia(fecha);
 
             if (horario == null)
             {
                 return BadRequest(new { message = "No hay un horario de atención configurado." });
             }
 
-            if (!EstaDentroDelRango(horario, fecha, horaInicio, horaFin))
+            if (!EstaDentroDelHorario(horario, horaInicio, horaFin))
             {
                 return BadRequest(new { message = "La cita debe estar dentro del horario de atención configurado." });
             }

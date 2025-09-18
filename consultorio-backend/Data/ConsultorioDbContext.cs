@@ -104,17 +104,17 @@ namespace ConsultorioMedico.API.Data
             // Configuración para Horarios de atención
             modelBuilder.Entity<HorarioAtencionModel>(entity =>
             {
-                entity.Property(e => e.InicioAtencion)
-                      .HasColumnType("datetime");
+                entity.Property(e => e.Fecha)
+                      .HasColumnType("date");
 
-                entity.Property(e => e.FinAtencion)
-                      .HasColumnType("datetime");
+                entity.Property(e => e.HoraInicio)
+                      .HasColumnType("time");
 
-                entity.Property(e => e.InicioFeriado)
-                      .HasColumnType("datetime");
+                entity.Property(e => e.HoraFin)
+                      .HasColumnType("time");
 
-                entity.Property(e => e.FinFeriado)
-                      .HasColumnType("datetime");
+                entity.HasIndex(e => e.Fecha)
+                      .IsUnique();
             });
 
             // No se definen datos semilla para permitir que la aplicación utilice únicamente los

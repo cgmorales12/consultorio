@@ -36,70 +36,95 @@
     <div class="horarios-atencion__header">
       <div>
         <h3><i class="fas fa-clock"></i> Horario de atención</h3>
-        <p>Indica el día y la hora en que inicia y finaliza la atención semanal del consultorio.</p>
+        <p>Selecciona en el calendario los días laborables y define el horario de inicio y fin de atención.</p>
       </div>
     </div>
 
-    <form [formGroup]="horarioForm" (ngSubmit)="guardarHorarios()" class="horarios-atencion__form">
-      <div class="horario-general">
-        <div class="horario-general__grupo">
-          <h4>Inicio de atención</h4>
-          <label>
-            Fecha y hora
-            <input type="datetime-local" formControlName="inicioAtencion" step="1800">
-          </label>
-          <p class="horario-general__detalle" *ngIf="inicioAtencionDetalle">
-            {{ inicioAtencionDetalle }}
-          </p>
+    <div class="horarios-atencion__contenido">
+      <div class="calendario-mensual">
+        <div class="calendario-mensual__header">
+          <button type="button" class="icon-button" (click)="cambiarMes(-1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <span class="calendario-mensual__titulo">{{ etiquetaMesActual }}</span>
+          <button type="button" class="icon-button" (click)="cambiarMes(1)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
-        <div class="horario-general__grupo">
-          <h4>Fin de atención</h4>
-          <label>
-            Fecha y hora
-            <input type="datetime-local" formControlName="finAtencion" step="1800">
-          </label>
-          <p class="horario-general__detalle" *ngIf="finAtencionDetalle">
-            {{ finAtencionDetalle }}
-          </p>
+
+        <div class="calendario-mensual__dias-semana">
+          <span *ngFor="let dia of diasSemana">{{ dia }}</span>
         </div>
-      </div>
 
-      <div class="horario-feriado">
-        <h4>Feriado</h4>
-        <p>Indica el periodo sin atención por feriado si aplica.</p>
-        <div class="horario-feriado__campos">
-          <label>
-            Inicio feriado
-            <input type="datetime-local" formControlName="inicioFeriado" step="1800">
-          </label>
-          <p class="horario-general__detalle" *ngIf="inicioFeriadoDetalle">
-            {{ inicioFeriadoDetalle }}
-          </p>
-          <label>
-            Fin feriado
-            <input type="datetime-local" formControlName="finFeriado" step="1800">
-          </label>
-          <p class="horario-general__detalle" *ngIf="finFeriadoDetalle">
-            {{ finFeriadoDetalle }}
-          </p>
+        <div class="calendario-mensual__semanas">
+          <div class="calendario-mensual__semana" *ngFor="let semana of semanasCalendario">
+            <button
+              type="button"
+              *ngFor="let dia of semana"
+              class="calendario-mensual__dia"
+              [class.calendario-mensual__dia--fuera]="!dia.inMonth"
+              [class.calendario-mensual__dia--seleccionado]="dia.isSelected"
+              [class.calendario-mensual__dia--hoy]="dia.isToday"
+              (click)="dia.inMonth && toggleDia(dia.iso)"
+            >
+              <span class="calendario-mensual__numero">{{ dia.date.getDate() }}</span>
+            </button>
+          </div>
         </div>
-        <small>Deja ambos campos vacíos si no hay feriados programados.</small>
+
+        <p class="calendario-mensual__indicacion">Haz clic sobre los días laborables para agregarlos.</p>
       </div>
 
-      <p class="horario-general__resumen" *ngIf="horarioResumen">{{ horarioResumen }}</p>
+      <form [formGroup]="horariosForm" (ngSubmit)="guardarHorarios()" class="horarios-atencion__form">
+        <div formArrayName="dias" class="horario-dias">
+          <div class="horario-dias__empty" *ngIf="!diasSeleccionadosControls.length">
+            Selecciona en el calendario los días en los que atenderá el consultorio.
+          </div>
 
-      <div class="horarios-atencion__feedback" *ngIf="mensajeHorarioError || mensajeHorarioExito">
-        <span class="mensaje-error" *ngIf="mensajeHorarioError">{{ mensajeHorarioError }}</span>
-        <span class="mensaje-exito" *ngIf="mensajeHorarioExito">{{ mensajeHorarioExito }}</span>
-      </div>
+          <div
+            class="horario-dia"
+            *ngFor="let diaGroup of diasSeleccionadosControls; let i = index"
+            [formGroupName]="i"
+          >
+            <header class="horario-dia__header">
+              <h4>{{ formatSelectedDate(diaGroup.get('fecha')?.value) }}</h4>
+              <button type="button" class="icon-button icon-button--small" (click)="eliminarDia(i)">
+                <i class="fas fa-times"></i>
+              </button>
+            </header>
 
-      <div class="horarios-atencion__actions">
-        <button type="submit" class="btn-guardar-horario" [disabled]="guardandoHorarios">
-          <i class="fas" [ngClass]="guardandoHorarios ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-          {{ guardandoHorarios ? 'Guardando...' : 'Guardar horario' }}
-        </button>
-      </div>
-    </form>
+            <div class="horario-dia__campos">
+              <label>
+                Inicio de atención
+                <input type="time" formControlName="horaInicio" step="1800" />
+              </label>
+              <label>
+                Fin de atención
+                <input type="time" formControlName="horaFin" step="1800" />
+              </label>
+            </div>
+
+            <div class="horario-dia__errores" *ngIf="diaGroup.invalid && (diaGroup.dirty || diaGroup.touched)">
+              <span *ngIf="diaGroup.hasError('rangoInvalido')">
+                Verifica que la hora de fin sea posterior a la de inicio y respete intervalos de 30 minutos.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="horarios-atencion__feedback" *ngIf="mensajeHorarioError || mensajeHorarioExito">
+          <span class="mensaje-error" *ngIf="mensajeHorarioError">{{ mensajeHorarioError }}</span>
+          <span class="mensaje-exito" *ngIf="mensajeHorarioExito">{{ mensajeHorarioExito }}</span>
+        </div>
+
+        <div class="horarios-atencion__actions">
+          <button type="submit" class="btn-guardar-horario" [disabled]="guardandoHorarios">
+            <i class="fas" [ngClass]="guardandoHorarios ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ guardandoHorarios ? 'Guardando...' : 'Guardar días y horarios' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </section>
 
   <section class="nueva-cita">

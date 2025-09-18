@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using ConsultorioMedico.API.Data;
 using ConsultorioMedico.API.Models;
 using ConsultorioMedico.API.Models.Dtos;
@@ -22,58 +25,66 @@ namespace ConsultorioMedico.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<HorarioAtencionDto>> Obtener()
+        public async Task<ActionResult<IEnumerable<HorarioAtencionDto>>> Obtener()
         {
-            var horario = await _context.HorariosAtencion.AsNoTracking().FirstOrDefaultAsync();
+            var horarios = await _context.HorariosAtencion
+                .AsNoTracking()
+                .OrderBy(h => h.Fecha)
+                .ToListAsync();
 
-            if (horario == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(MapHorario(horario));
+            return Ok(horarios.Select(MapHorario));
         }
 
         [HttpPut]
-        public async Task<ActionResult<HorarioAtencionDto>> Actualizar([FromBody] ActualizarHorarioAtencionRequest request)
+        public async Task<ActionResult<IEnumerable<HorarioAtencionDto>>> Actualizar([FromBody] ActualizarHorariosAtencionRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var horarioModel = MapPayload(request.Horario, out var error);
-            if (!string.IsNullOrEmpty(error))
+            var payloads = request.Horarios?.ToList() ?? new List<HorarioAtencionPayload>();
+            if (payloads.Count == 0)
             {
-                ModelState.AddModelError(nameof(HorarioAtencionPayload), error!);
+                ModelState.AddModelError(nameof(request.Horarios), "Debes indicar al menos un horario de atención.");
+                return BadRequest(ModelState);
+            }
+
+            if (!TryMapPayloads(payloads, out var modelos, out var errores))
+            {
+                foreach (var error in errores)
+                {
+                    ModelState.AddModelError(nameof(HorarioAtencionPayload), error);
+                }
+
                 return BadRequest(ModelState);
             }
 
             try
             {
-                var existente = await _context.HorariosAtencion.FirstOrDefaultAsync();
-                if (existente == null)
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                var existentes = await _context.HorariosAtencion.ToListAsync();
+                if (existentes.Count > 0)
                 {
-                    await _context.HorariosAtencion.AddAsync(horarioModel);
-                }
-                else
-                {
-                    existente.InicioAtencion = horarioModel.InicioAtencion;
-                    existente.FinAtencion = horarioModel.FinAtencion;
-                    existente.InicioFeriado = horarioModel.InicioFeriado;
-                    existente.FinFeriado = horarioModel.FinFeriado;
-                    _context.HorariosAtencion.Update(existente);
+                    _context.HorariosAtencion.RemoveRange(existentes);
+                    await _context.SaveChangesAsync();
                 }
 
+                await _context.HorariosAtencion.AddRangeAsync(modelos);
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                var resultado = existente ?? horarioModel;
-                return Ok(MapHorario(resultado));
+                var horarios = await _context.HorariosAtencion
+                    .AsNoTracking()
+                    .OrderBy(h => h.Fecha)
+                    .ToListAsync();
+
+                return Ok(horarios.Select(MapHorario));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al actualizar el horario de atención.");
-                return StatusCode(500, new { message = "No se pudo actualizar el horario de atención." });
+                _logger.LogError(ex, "Error al actualizar los horarios de atención.");
+                return StatusCode(500, new { message = "No se pudieron actualizar los horarios de atención." });
             }
         }
 
@@ -82,87 +93,73 @@ namespace ConsultorioMedico.API.Controllers
             return new HorarioAtencionDto
             {
                 HorarioAtencionId = horario.HorarioAtencionId,
-                InicioAtencion = horario.InicioAtencion,
-                FinAtencion = horario.FinAtencion,
-                InicioFeriado = horario.InicioFeriado,
-                FinFeriado = horario.FinFeriado
+                Fecha = horario.Fecha,
+                HoraInicio = horario.HoraInicio,
+                HoraFin = horario.HoraFin
             };
         }
 
-        private static HorarioAtencionModel MapPayload(HorarioAtencionPayload payload, out string? error)
+        private static bool TryMapPayloads(
+            IEnumerable<HorarioAtencionPayload> payloads,
+            out List<HorarioAtencionModel> modelos,
+            out List<string> errores)
         {
-            error = null;
+            modelos = new List<HorarioAtencionModel>();
+            errores = new List<string>();
+            var fechas = new HashSet<DateTime>();
 
-            var inicioAtencion = NormalizarFecha(payload.InicioAtencion);
-            var finAtencion = NormalizarFecha(payload.FinAtencion);
+            var formatos = new[] { "hh\\:mm", "h\\:mm", "HH\\:mm" };
+            var index = 0;
 
-            if (finAtencion <= inicioAtencion)
+            foreach (var payload in payloads)
             {
-                error = "La fecha de fin debe ser posterior a la fecha de inicio.";
-                return new HorarioAtencionModel();
+                index++;
+                var fecha = DateTime.SpecifyKind(payload.Fecha.Date, DateTimeKind.Unspecified);
+
+                if (!TimeSpan.TryParseExact(payload.HoraInicio, formatos, CultureInfo.InvariantCulture, TimeSpanStyles.None, out var horaInicio))
+                {
+                    errores.Add($"El horario #{index} tiene una hora de inicio inválida.");
+                    continue;
+                }
+
+                if (!TimeSpan.TryParseExact(payload.HoraFin, formatos, CultureInfo.InvariantCulture, TimeSpanStyles.None, out var horaFin))
+                {
+                    errores.Add($"El horario #{index} tiene una hora de fin inválida.");
+                    continue;
+                }
+
+                if (horaFin <= horaInicio)
+                {
+                    errores.Add($"El horario #{index} debe tener una hora de fin posterior a la de inicio.");
+                    continue;
+                }
+
+                if (!EsMultiploDeTreinta(horaInicio) || !EsMultiploDeTreinta(horaFin))
+                {
+                    errores.Add($"El horario #{index} debe configurarse en intervalos de 30 minutos.");
+                    continue;
+                }
+
+                if (!fechas.Add(fecha))
+                {
+                    errores.Add($"Ya existe un horario configurado para el día {fecha:yyyy-MM-dd}.");
+                    continue;
+                }
+
+                modelos.Add(new HorarioAtencionModel
+                {
+                    Fecha = fecha,
+                    HoraInicio = horaInicio,
+                    HoraFin = horaFin
+                });
             }
 
-            if (!EsMultiploDeTreinta(inicioAtencion.TimeOfDay) || !EsMultiploDeTreinta(finAtencion.TimeOfDay))
-            {
-                error = "Las horas deben configurarse en intervalos de 30 minutos.";
-                return new HorarioAtencionModel();
-            }
-
-            DateTime? inicioFeriado = null;
-            DateTime? finFeriado = null;
-
-            if (payload.InicioFeriado.HasValue || payload.FinFeriado.HasValue)
-            {
-                if (!payload.InicioFeriado.HasValue || !payload.FinFeriado.HasValue)
-                {
-                    error = "Para configurar un feriado debes indicar fecha de inicio y fin.";
-                    return new HorarioAtencionModel();
-                }
-
-                inicioFeriado = NormalizarFecha(payload.InicioFeriado.Value);
-                finFeriado = NormalizarFecha(payload.FinFeriado.Value);
-
-                if (finFeriado <= inicioFeriado)
-                {
-                    error = "La fecha de fin del feriado debe ser posterior a la de inicio.";
-                    return new HorarioAtencionModel();
-                }
-
-                if (inicioFeriado < inicioAtencion || finFeriado > finAtencion)
-                {
-                    error = "El rango de feriado debe estar comprendido dentro del horario de atención.";
-                    return new HorarioAtencionModel();
-                }
-
-                if (!EsMultiploDeTreinta(inicioFeriado.Value.TimeOfDay) || !EsMultiploDeTreinta(finFeriado.Value.TimeOfDay))
-                {
-                    error = "Los horarios de feriado deben configurarse en intervalos de 30 minutos.";
-                    return new HorarioAtencionModel();
-                }
-            }
-
-            return new HorarioAtencionModel
-            {
-                InicioAtencion = inicioAtencion,
-                FinAtencion = finAtencion,
-                InicioFeriado = inicioFeriado,
-                FinFeriado = finFeriado
-            };
+            return errores.Count == 0;
         }
 
         private static bool EsMultiploDeTreinta(TimeSpan time)
         {
             return time.TotalMinutes % 30 == 0;
-        }
-
-        private static DateTime NormalizarFecha(DateTime fecha)
-        {
-            if (fecha.Kind == DateTimeKind.Unspecified)
-            {
-                return fecha;
-            }
-
-            return DateTime.SpecifyKind(fecha, DateTimeKind.Unspecified);
         }
     }
 }

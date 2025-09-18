@@ -6,12 +6,10 @@ namespace ConsultorioMedico.API.Models.Dtos
     {
         public int HorarioAtencionId { get; set; }
 
-        public DateTime InicioAtencion { get; set; }
+        public DateTime Fecha { get; set; }
 
-        public DateTime FinAtencion { get; set; }
+        public TimeSpan HoraInicio { get; set; }
 
-        public DateTime? InicioFeriado { get; set; }
-
-        public DateTime? FinFeriado { get; set; }
+        public TimeSpan HoraFin { get; set; }
     }
 }
