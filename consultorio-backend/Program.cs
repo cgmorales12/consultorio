@@ -78,7 +78,7 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ConsultorioDbContext>();
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
 
         if (!context.PlantillasConsulta.Any())
         {
@@ -122,39 +122,17 @@ try
 
         if (!context.HorariosAtencion.Any())
         {
-            var diasLaborables = new[]
+            var horario = new HorarioAtencionModel
             {
-                DayOfWeek.Monday,
-                DayOfWeek.Tuesday,
-                DayOfWeek.Wednesday,
-                DayOfWeek.Thursday,
-                DayOfWeek.Friday
+                DiaInicio = DayOfWeek.Monday,
+                HoraInicio = new TimeSpan(8, 0, 0),
+                DiaFin = DayOfWeek.Friday,
+                HoraFin = new TimeSpan(17, 30, 0)
             };
 
-            var horarios = new List<HorarioAtencionModel>();
-
-            foreach (var dia in diasLaborables)
-            {
-                horarios.Add(new HorarioAtencionModel
-                {
-                    DiaSemana = dia,
-                    HoraInicio = new TimeSpan(8, 0, 0),
-                    HoraFin = new TimeSpan(11, 30, 0),
-                    Activo = true
-                });
-
-                horarios.Add(new HorarioAtencionModel
-                {
-                    DiaSemana = dia,
-                    HoraInicio = new TimeSpan(14, 0, 0),
-                    HoraFin = new TimeSpan(17, 30, 0),
-                    Activo = true
-                });
-            }
-
-            context.HorariosAtencion.AddRange(horarios);
+            context.HorariosAtencion.Add(horario);
             context.SaveChanges();
-            Console.WriteLine("Horarios de atención iniciales creados.");
+            Console.WriteLine("Horario de atención inicial creado.");
         }
 
         Console.WriteLine("Base de datos verificada/creada exitosamente.");

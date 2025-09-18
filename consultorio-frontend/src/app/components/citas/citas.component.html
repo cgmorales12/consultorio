@@ -36,46 +36,45 @@
     <div class="horarios-atencion__header">
       <div>
         <h3><i class="fas fa-clock"></i> Horario de atención</h3>
-        <p>Define los días y rangos horarios en los que el consultorio ofrecerá citas.</p>
+        <p>Indica el día y la hora en que inicia y finaliza la atención semanal del consultorio.</p>
       </div>
-      <button type="button" class="btn-agregar-horario" (click)="agregarHorario()">
-        <i class="fas fa-plus"></i>
-        Añadir horario
-      </button>
     </div>
 
-    <form [formGroup]="horariosForm" (ngSubmit)="guardarHorarios()" class="horarios-atencion__form">
-      <div formArrayName="horarios" class="horarios-atencion__list">
-        <div class="horario-item" *ngFor="let horarioControl of horariosArray.controls; let i = index" [formGroupName]="i">
-          <div class="horario-item__field">
-            <label>Día</label>
-            <select formControlName="diaSemana">
-              <option *ngFor="let dia of diasSemana" [value]="dia.value">{{ dia.label }}</option>
-            </select>
+    <form [formGroup]="horarioForm" (ngSubmit)="guardarHorarios()" class="horarios-atencion__form">
+      <div class="horario-general">
+        <div class="horario-general__grupo">
+          <h4>Inicio de atención</h4>
+          <div class="horario-general__campos">
+            <label>
+              Día
+              <select formControlName="diaInicio">
+                <option *ngFor="let dia of diasSemana" [value]="dia.value">{{ dia.label }}</option>
+              </select>
+            </label>
+            <label>
+              Hora
+              <input type="time" formControlName="horaInicio" step="1800">
+            </label>
           </div>
-          <div class="horario-item__field">
-            <label>Hora inicio</label>
-            <input type="time" formControlName="horaInicio" step="1800">
+        </div>
+        <div class="horario-general__grupo">
+          <h4>Fin de atención</h4>
+          <div class="horario-general__campos">
+            <label>
+              Día
+              <select formControlName="diaFin">
+                <option *ngFor="let dia of diasSemana" [value]="dia.value">{{ dia.label }}</option>
+              </select>
+            </label>
+            <label>
+              Hora
+              <input type="time" formControlName="horaFin" step="1800">
+            </label>
           </div>
-          <div class="horario-item__field">
-            <label>Hora fin</label>
-            <input type="time" formControlName="horaFin" step="1800">
-          </div>
-          <label class="horario-item__activo">
-            <input type="checkbox" formControlName="activo">
-            Activo
-          </label>
-          <button
-            type="button"
-            class="icon-button icon-button--danger"
-            (click)="eliminarHorario(i)"
-            [disabled]="horariosArray.length === 1"
-            aria-label="Eliminar horario"
-          >
-            <i class="fas fa-trash"></i>
-          </button>
         </div>
       </div>
+
+      <p class="horario-general__resumen" *ngIf="horarioResumen">{{ horarioResumen }}</p>
 
       <div class="horarios-atencion__feedback" *ngIf="mensajeHorarioError || mensajeHorarioExito">
         <span class="mensaje-error" *ngIf="mensajeHorarioError">{{ mensajeHorarioError }}</span>
@@ -85,7 +84,7 @@
       <div class="horarios-atencion__actions">
         <button type="submit" class="btn-guardar-horario" [disabled]="guardandoHorarios">
           <i class="fas" [ngClass]="guardandoHorarios ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-          {{ guardandoHorarios ? 'Guardando...' : 'Guardar horarios' }}
+          {{ guardandoHorarios ? 'Guardando...' : 'Guardar horario' }}
         </button>
       </div>
     </form>

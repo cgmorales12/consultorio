@@ -21,64 +21,59 @@ namespace ConsultorioMedico.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HorarioAtencionDto>>> ObtenerTodos()
+        public async Task<ActionResult<HorarioAtencionDto>> Obtener()
         {
-            var horarios = await _context.HorariosAtencion
-                .OrderBy(h => h.DiaSemana)
-                .ThenBy(h => h.HoraInicio)
-                .ToListAsync();
+            var horario = await _context.HorariosAtencion.AsNoTracking().FirstOrDefaultAsync();
 
-            return Ok(horarios.Select(MapHorario));
+            if (horario == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(MapHorario(horario));
         }
 
         [HttpPut]
-        public async Task<ActionResult<IEnumerable<HorarioAtencionDto>>> Actualizar([FromBody] ActualizarHorariosAtencionRequest request)
+        public async Task<ActionResult<HorarioAtencionDto>> Actualizar([FromBody] ActualizarHorarioAtencionRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var modelos = new List<HorarioAtencionModel>();
-
-            foreach (var payload in request.Horarios)
+            var horarioModel = MapPayload(request.Horario, out var error);
+            if (!string.IsNullOrEmpty(error))
             {
-                var horario = MapPayload(payload, out var error);
-                if (!string.IsNullOrEmpty(error))
-                {
-                    ModelState.AddModelError(nameof(HorarioAtencionPayload), error!);
-                    return BadRequest(ModelState);
-                }
-
-                modelos.Add(horario);
+                ModelState.AddModelError(nameof(HorarioAtencionPayload), error!);
+                return BadRequest(ModelState);
             }
-
-            if (TieneTraslapes(modelos))
-            {
-                return BadRequest(new { message = "Los horarios no pueden traslaparse en el mismo día." });
-            }
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                var existentes = await _context.HorariosAtencion.ToListAsync();
-                _context.HorariosAtencion.RemoveRange(existentes);
+                var existente = await _context.HorariosAtencion.FirstOrDefaultAsync();
+                if (existente == null)
+                {
+                    await _context.HorariosAtencion.AddAsync(horarioModel);
+                }
+                else
+                {
+                    existente.DiaInicio = horarioModel.DiaInicio;
+                    existente.HoraInicio = horarioModel.HoraInicio;
+                    existente.DiaFin = horarioModel.DiaFin;
+                    existente.HoraFin = horarioModel.HoraFin;
+                    _context.HorariosAtencion.Update(existente);
+                }
+
                 await _context.SaveChangesAsync();
 
-                await _context.HorariosAtencion.AddRangeAsync(modelos);
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
+                var resultado = existente ?? horarioModel;
+                return Ok(MapHorario(resultado));
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error al actualizar los horarios de atención.");
-                return StatusCode(500, new { message = "No se pudieron actualizar los horarios de atención." });
+                _logger.LogError(ex, "Error al actualizar el horario de atención.");
+                return StatusCode(500, new { message = "No se pudo actualizar el horario de atención." });
             }
-
-            return Ok(modelos.OrderBy(h => h.DiaSemana).ThenBy(h => h.HoraInicio).Select(MapHorario));
         }
 
         private static HorarioAtencionDto MapHorario(HorarioAtencionModel horario)
@@ -86,10 +81,10 @@ namespace ConsultorioMedico.API.Controllers
             return new HorarioAtencionDto
             {
                 HorarioAtencionId = horario.HorarioAtencionId,
-                DiaSemana = horario.DiaSemana,
+                DiaInicio = (int)horario.DiaInicio,
                 HoraInicio = FormatearHora(horario.HoraInicio),
-                HoraFin = FormatearHora(horario.HoraFin),
-                Activo = horario.Activo
+                DiaFin = (int)horario.DiaFin,
+                HoraFin = FormatearHora(horario.HoraFin)
             };
         }
 
@@ -97,9 +92,21 @@ namespace ConsultorioMedico.API.Controllers
         {
             error = null;
 
-            if (payload.DiaSemana < 0 || payload.DiaSemana > 6)
+            if (payload.DiaInicio < 0 || payload.DiaInicio > 6)
             {
-                error = "El día de la semana es inválido.";
+                error = "El día de inicio es inválido.";
+                return new HorarioAtencionModel();
+            }
+
+            if (payload.DiaFin < 0 || payload.DiaFin > 6)
+            {
+                error = "El día de fin es inválido.";
+                return new HorarioAtencionModel();
+            }
+
+            if (payload.DiaFin < payload.DiaInicio)
+            {
+                error = "El día de fin debe ser mayor o igual al día de inicio.";
                 return new HorarioAtencionModel();
             }
 
@@ -117,24 +124,24 @@ namespace ConsultorioMedico.API.Controllers
                 return new HorarioAtencionModel();
             }
 
-            if (horaFin <= horaInicio)
-            {
-                error = "La hora de fin debe ser mayor a la hora de inicio.";
-                return new HorarioAtencionModel();
-            }
-
             if (!EsMultiploDeTreinta(horaInicio) || !EsMultiploDeTreinta(horaFin))
             {
                 error = "Las horas deben configurarse en intervalos de 30 minutos.";
                 return new HorarioAtencionModel();
             }
 
+            if (horaFin <= horaInicio)
+            {
+                error = "La hora de fin debe ser mayor a la hora de inicio.";
+                return new HorarioAtencionModel();
+            }
+
             return new HorarioAtencionModel
             {
-                DiaSemana = (DayOfWeek)payload.DiaSemana,
+                DiaInicio = (DayOfWeek)payload.DiaInicio,
                 HoraInicio = horaInicio,
-                HoraFin = horaFin,
-                Activo = payload.Activo
+                DiaFin = (DayOfWeek)payload.DiaFin,
+                HoraFin = horaFin
             };
         }
 
@@ -156,26 +163,6 @@ namespace ConsultorioMedico.API.Controllers
         private static bool EsMultiploDeTreinta(TimeSpan time)
         {
             return time.TotalMinutes % 30 == 0;
-        }
-
-        private static bool TieneTraslapes(IEnumerable<HorarioAtencionModel> horarios)
-        {
-            return horarios
-                .Where(h => h.Activo)
-                .GroupBy(h => h.DiaSemana)
-                .Any(grupo =>
-                {
-                    var ordenados = grupo.OrderBy(h => h.HoraInicio).ToList();
-                    for (var i = 1; i < ordenados.Count; i++)
-                    {
-                        if (ordenados[i].HoraInicio < ordenados[i - 1].HoraFin)
-                        {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                });
         }
 
         private static string FormatearHora(TimeSpan hora)

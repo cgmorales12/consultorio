@@ -8,14 +8,15 @@ namespace ConsultorioMedico.API.Models
         public int HorarioAtencionId { get; set; }
 
         [Required]
-        public DayOfWeek DiaSemana { get; set; }
+        public DayOfWeek DiaInicio { get; set; }
 
         [Required]
         public TimeSpan HoraInicio { get; set; }
 
         [Required]
-        public TimeSpan HoraFin { get; set; }
+        public DayOfWeek DiaFin { get; set; }
 
-        public bool Activo { get; set; } = true;
+        [Required]
+        public TimeSpan HoraFin { get; set; }
     }
 }

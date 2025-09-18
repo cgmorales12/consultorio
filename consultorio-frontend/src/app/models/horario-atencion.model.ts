@@ -1,18 +1,18 @@
 export interface HorarioAtencion {
   horarioAtencionId: number;
-  diaSemana: number;
+  diaInicio: number;
   horaInicio: string;
+  diaFin: number;
   horaFin: string;
-  activo: boolean;
 }
 
 export interface HorarioAtencionPayload {
-  diaSemana: number;
+  diaInicio: number;
   horaInicio: string;
+  diaFin: number;
   horaFin: string;
-  activo: boolean;
 }
 
-export interface ActualizarHorariosRequest {
-  horarios: HorarioAtencionPayload[];
+export interface ActualizarHorarioRequest {
+  horario: HorarioAtencionPayload;
 }

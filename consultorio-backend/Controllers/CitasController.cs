@@ -115,8 +115,14 @@ namespace ConsultorioMedico.API.Controllers
                 .Where(horas => horas > 0)
                 .Sum();
 
-            var horariosDia = await ObtenerHorariosActivos(fecha);
-            var horasJornada = horariosDia.Sum(rango => (rango.HoraFin - rango.HoraInicio).TotalHours);
+            var horarioGeneral = await ObtenerHorarioConfigurado();
+            var horasJornada = 0.0;
+
+            if (horarioGeneral != null && DiaDentroDelHorario(horarioGeneral, fecha.DayOfWeek))
+            {
+                horasJornada = Math.Max(0, (horarioGeneral.HoraFin - horarioGeneral.HoraInicio).TotalHours);
+            }
+
             var horasDisponibles = Math.Max(0, horasJornada - horasOcupadas);
 
             var estadisticas = new DailyStatsDto
@@ -302,13 +308,28 @@ namespace ConsultorioMedico.API.Controllers
             return new DateTime(hora.Ticks).ToString("HH:mm");
         }
 
-        private async Task<List<HorarioAtencionModel>> ObtenerHorariosActivos(DateTime fecha)
+        private async Task<HorarioAtencionModel?> ObtenerHorarioConfigurado()
         {
-            var diaSemana = fecha.DayOfWeek;
-            return await _context.HorariosAtencion
-                .Where(h => h.Activo && h.DiaSemana == diaSemana)
-                .OrderBy(h => h.HoraInicio)
-                .ToListAsync();
+            return await _context.HorariosAtencion.FirstOrDefaultAsync();
+        }
+
+        private static bool DiaDentroDelHorario(HorarioAtencionModel horario, DayOfWeek dia)
+        {
+            var diaInicio = (int)horario.DiaInicio;
+            var diaFin = (int)horario.DiaFin;
+            var diaActual = (int)dia;
+
+            return diaActual >= diaInicio && diaActual <= diaFin;
+        }
+
+        private static bool EstaDentroDelRango(HorarioAtencionModel horario, DayOfWeek dia, TimeSpan horaInicio, TimeSpan horaFin)
+        {
+            if (!DiaDentroDelHorario(horario, dia))
+            {
+                return false;
+            }
+
+            return horaInicio >= horario.HoraInicio && horaFin <= horario.HoraFin;
         }
 
         private async Task<bool> ExisteConflictoHorario(DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, int? excluirId)
@@ -342,15 +363,14 @@ namespace ConsultorioMedico.API.Controllers
                 return BadRequest(new { message = "Cada cita debe durar exactamente 30 minutos." });
             }
 
-            var horarios = await ObtenerHorariosActivos(fecha);
+            var horario = await ObtenerHorarioConfigurado();
 
-            if (!horarios.Any())
+            if (horario == null)
             {
-                return BadRequest(new { message = "No hay horarios de atención configurados para este día." });
+                return BadRequest(new { message = "No hay un horario de atención configurado." });
             }
 
-            var dentroDeHorario = horarios.Any(h => horaInicio >= h.HoraInicio && horaFin <= h.HoraFin);
-            if (!dentroDeHorario)
+            if (!EstaDentroDelRango(horario, fecha.DayOfWeek, horaInicio, horaFin))
             {
                 return BadRequest(new { message = "La cita debe estar dentro del horario de atención configurado." });
             }

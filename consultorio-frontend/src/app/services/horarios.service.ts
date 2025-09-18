@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ActualizarHorariosRequest, HorarioAtencion, HorarioAtencionPayload } from '../models/horario-atencion.model';
+import { ActualizarHorarioRequest, HorarioAtencion, HorarioAtencionPayload } from '../models/horario-atencion.model';
 
 @Injectable({ providedIn: 'root' })
 export class HorariosService {
@@ -9,12 +9,12 @@ export class HorariosService {
 
   constructor(private readonly http: HttpClient) {}
 
-  obtenerHorarios(): Observable<HorarioAtencion[]> {
-    return this.http.get<HorarioAtencion[]>(this.baseUrl);
+  obtenerHorario(): Observable<HorarioAtencion> {
+    return this.http.get<HorarioAtencion>(this.baseUrl);
   }
 
-  guardarHorarios(horarios: HorarioAtencionPayload[]): Observable<HorarioAtencion[]> {
-    const payload: ActualizarHorariosRequest = { horarios };
-    return this.http.put<HorarioAtencion[]>(this.baseUrl, payload);
+  guardarHorario(horario: HorarioAtencionPayload): Observable<HorarioAtencion> {
+    const payload: ActualizarHorarioRequest = { horario };
+    return this.http.put<HorarioAtencion>(this.baseUrl, payload);
   }
 }

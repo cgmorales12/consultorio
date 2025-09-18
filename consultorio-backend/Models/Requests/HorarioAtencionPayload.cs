@@ -6,23 +6,24 @@ namespace ConsultorioMedico.API.Models.Requests
     {
         [Required]
         [Range(0, 6)]
-        public int DiaSemana { get; set; }
+        public int DiaInicio { get; set; }
 
         [Required]
         [RegularExpression(@"^\d{1,2}:\d{2}(:\d{2})?$", ErrorMessage = "La hora debe tener formato HH:mm o HH:mm:ss")]
         public string HoraInicio { get; set; } = string.Empty;
 
         [Required]
+        [Range(0, 6)]
+        public int DiaFin { get; set; }
+
+        [Required]
         [RegularExpression(@"^\d{1,2}:\d{2}(:\d{2})?$", ErrorMessage = "La hora debe tener formato HH:mm o HH:mm:ss")]
         public string HoraFin { get; set; } = string.Empty;
-
-        public bool Activo { get; set; } = true;
     }
 
-    public class ActualizarHorariosAtencionRequest
+    public class ActualizarHorarioAtencionRequest
     {
         [Required]
-        [MinLength(1, ErrorMessage = "Debe proporcionar al menos un horario.")]
-        public List<HorarioAtencionPayload> Horarios { get; set; } = new();
+        public HorarioAtencionPayload Horario { get; set; } = new();
     }
 }

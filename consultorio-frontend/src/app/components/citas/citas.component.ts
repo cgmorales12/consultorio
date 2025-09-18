@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject, interval } from 'rxjs';
 import { finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AgendaSemanalDia, Cita, CitaPayload, DailyStats, EstadoCita } from '../../models/cita.model';
@@ -44,9 +44,9 @@ export class CitasComponent implements OnInit, OnDestroy {
   allAppointments: Cita[] = [];
   stats: DailyStats | null = null;
   availableSlots: { start: string; end: string }[] = [];
-  horarios: HorarioAtencion[] = [];
+  horario?: HorarioAtencion;
 
-  horariosForm: FormGroup;
+  horarioForm: FormGroup;
   guardandoHorarios = false;
   mensajeHorarioExito?: string;
   mensajeHorarioError?: string;
@@ -93,8 +93,11 @@ export class CitasComponent implements OnInit, OnDestroy {
     private readonly horariosService: HorariosService
   ) {
     this.citaForm = this.crearFormularioCita();
-    this.horariosForm = this.fb.group({
-      horarios: this.fb.array<FormGroup>([])
+    this.horarioForm = this.fb.group({
+      diaInicio: [1, Validators.required],
+      horaInicio: ['08:00', Validators.required],
+      diaFin: [5, Validators.required],
+      horaFin: ['17:00', Validators.required]
     });
   }
 
@@ -147,10 +150,6 @@ export class CitasComponent implements OnInit, OnDestroy {
 
   get nuevoPacienteForm(): FormGroup {
     return this.citaForm.get('nuevoPaciente') as FormGroup;
-  }
-
-  get horariosArray(): FormArray<FormGroup> {
-    return this.horariosForm.get('horarios') as FormArray<FormGroup>;
   }
 
   setView(view: VistaCitas): void {
@@ -276,18 +275,36 @@ export class CitasComponent implements OnInit, OnDestroy {
 
   cargarHorarios(): void {
     this.mensajeHorarioError = undefined;
-    this.horariosService.obtenerHorarios().subscribe({
-      next: horarios => {
-        this.horarios = horarios;
-        this.rebuildHorariosForm(horarios);
+    this.horariosService.obtenerHorario().subscribe({
+      next: horario => {
+        this.horario = {
+          ...horario,
+          horaInicio: this.normalizarHora(horario.horaInicio),
+          horaFin: this.normalizarHora(horario.horaFin)
+        };
+        this.horarioForm.patchValue({
+          diaInicio: this.horario.diaInicio,
+          horaInicio: this.horario.horaInicio,
+          diaFin: this.horario.diaFin,
+          horaFin: this.horario.horaFin
+        });
+        this.horarioForm.markAsPristine();
+        this.horarioForm.markAsUntouched();
         this.updateAvailableSlots();
       },
       error: error => {
-        console.error('No se pudieron cargar los horarios de atención', error);
-        this.horarios = [];
-        this.rebuildHorariosForm([]);
+        console.error('No se pudieron cargar el horario de atención', error);
+        this.horario = undefined;
+        this.horarioForm.reset({
+          diaInicio: 1,
+          horaInicio: '08:00',
+          diaFin: 5,
+          horaFin: '17:00'
+        });
+        this.horarioForm.markAsPristine();
+        this.horarioForm.markAsUntouched();
         this.availableSlots = [];
-        this.mensajeHorarioError = 'No se pudieron cargar los horarios de atención.';
+        this.mensajeHorarioError = 'No se pudieron cargar el horario de atención.';
       }
     });
   }
@@ -427,51 +444,50 @@ export class CitasComponent implements OnInit, OnDestroy {
     }
   }
 
-  agregarHorario(): void {
-    this.horariosArray.push(this.crearHorarioGroup());
-  }
-
-  eliminarHorario(index: number): void {
-    this.horariosArray.removeAt(index);
-  }
-
   guardarHorarios(): void {
     this.mensajeHorarioExito = undefined;
     this.mensajeHorarioError = undefined;
 
-    if (!this.horariosArray.length) {
-      this.mensajeHorarioError = 'Debe registrar al menos un horario de atención.';
+    if (this.horarioForm.invalid) {
+      this.horarioForm.markAllAsTouched();
+      this.mensajeHorarioError = 'Revisa los campos del horario de atención.';
       return;
     }
 
-    if (this.horariosForm.invalid) {
-      this.horariosArray.controls.forEach(control => control.markAllAsTouched());
-      this.mensajeHorarioError = 'Revisa los campos resaltados del horario.';
-      return;
-    }
-
-    const horariosPayload: HorarioAtencionPayload[] = this.horariosArray.controls.map(control => ({
-      diaSemana: Number(control.get('diaSemana')?.value ?? 0),
-      horaInicio: this.normalizarHora(control.get('horaInicio')?.value ?? ''),
-      horaFin: this.normalizarHora(control.get('horaFin')?.value ?? ''),
-      activo: Boolean(control.get('activo')?.value)
-    }));
+    const valores = this.horarioForm.getRawValue();
+    const horarioPayload: HorarioAtencionPayload = {
+      diaInicio: Number(valores.diaInicio ?? 0),
+      horaInicio: this.normalizarHora(valores.horaInicio ?? ''),
+      diaFin: Number(valores.diaFin ?? 0),
+      horaFin: this.normalizarHora(valores.horaFin ?? '')
+    };
 
     this.guardandoHorarios = true;
 
     this.horariosService
-      .guardarHorarios(horariosPayload)
+      .guardarHorario(horarioPayload)
       .pipe(finalize(() => (this.guardandoHorarios = false)))
       .subscribe({
-        next: horarios => {
-          this.horarios = horarios;
-          this.mensajeHorarioExito = 'Horarios actualizados correctamente.';
-          this.rebuildHorariosForm(horarios);
+        next: horario => {
+          this.horario = {
+            ...horario,
+            horaInicio: this.normalizarHora(horario.horaInicio),
+            horaFin: this.normalizarHora(horario.horaFin)
+          };
+          this.mensajeHorarioExito = 'Horario actualizado correctamente.';
+          this.horarioForm.patchValue({
+            diaInicio: this.horario.diaInicio,
+            horaInicio: this.horario.horaInicio,
+            diaFin: this.horario.diaFin,
+            horaFin: this.horario.horaFin
+          });
+          this.horarioForm.markAsPristine();
+          this.horarioForm.markAsUntouched();
           this.updateAvailableSlots();
         },
         error: error => {
-          console.error('No se pudieron guardar los horarios de atención', error);
-          this.mensajeHorarioError = 'No se pudieron guardar los horarios de atención. Intenta nuevamente.';
+          console.error('No se pudo guardar el horario de atención', error);
+          this.mensajeHorarioError = 'No se pudo guardar el horario de atención. Intenta nuevamente.';
         }
       });
   }
@@ -479,6 +495,22 @@ export class CitasComponent implements OnInit, OnDestroy {
   getDiaSemanaLabel(dia: number): string {
     const encontrado = this.diasSemana.find(item => item.value === dia);
     return encontrado ? encontrado.label : 'Desconocido';
+  }
+
+  get horarioResumen(): string | null {
+    const diaInicio = Number(this.horarioForm.get('diaInicio')?.value ?? Number.NaN);
+    const diaFin = Number(this.horarioForm.get('diaFin')?.value ?? Number.NaN);
+    const horaInicio = this.normalizarHora((this.horarioForm.get('horaInicio')?.value ?? '').toString());
+    const horaFin = this.normalizarHora((this.horarioForm.get('horaFin')?.value ?? '').toString());
+
+    if (Number.isNaN(diaInicio) || Number.isNaN(diaFin) || !horaInicio || !horaFin) {
+      return null;
+    }
+
+    const inicioLabel = this.getDiaSemanaLabel(diaInicio);
+    const finLabel = this.getDiaSemanaLabel(diaFin);
+
+    return `El consultorio atiende en horario recorrido desde ${inicioLabel} a las ${horaInicio} hasta ${finLabel} a las ${horaFin}.`;
   }
 
   executeAction(cita: Cita, action: QuickAction): void {
@@ -714,8 +746,8 @@ export class CitasComponent implements OnInit, OnDestroy {
   }
 
   private calculateAvailableSlots(citas: Cita[]): { start: string; end: string }[] {
-    const horariosDia = this.getHorariosParaDia(this.selectedDate);
-    if (!horariosDia.length) {
+    const rango = this.obtenerRangoParaDia(this.selectedDate);
+    if (!rango) {
       return [];
     }
 
@@ -729,19 +761,16 @@ export class CitasComponent implements OnInit, OnDestroy {
     });
 
     const slots: { start: string; end: string }[] = [];
-    const ordenados = [...horariosDia].sort((a, b) => this.toMinutes(a.horaInicio) - this.toMinutes(b.horaInicio));
+    const inicio = this.toMinutes(rango.horaInicio);
+    const fin = this.toMinutes(rango.horaFin);
 
-    for (const horario of ordenados) {
-      const inicio = this.toMinutes(horario.horaInicio);
-      const fin = this.toMinutes(horario.horaFin);
-      for (let cursor = inicio; cursor <= fin - 30; cursor += 30) {
-        if (ocupados.has(cursor)) {
-          continue;
-        }
-
-        const finSlot = cursor + 30;
-        slots.push({ start: this.toTime(cursor), end: this.toTime(finSlot) });
+    for (let cursor = inicio; cursor <= fin - 30; cursor += 30) {
+      if (ocupados.has(cursor)) {
+        continue;
       }
+
+      const finSlot = cursor + 30;
+      slots.push({ start: this.toTime(cursor), end: this.toTime(finSlot) });
     }
 
     return slots;
@@ -766,34 +795,21 @@ export class CitasComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getHorariosParaDia(date: Date): HorarioAtencion[] {
-    const dia = date.getDay();
-    return this.horarios.filter(h => h.activo && h.diaSemana === dia);
-  }
-
-  private rebuildHorariosForm(horarios: HorarioAtencion[]): void {
-    const array = this.horariosArray;
-    array.clear();
-
-    if (!horarios.length) {
-      array.push(this.crearHorarioGroup());
-    } else {
-      horarios
-        .sort((a, b) => a.diaSemana - b.diaSemana || this.toMinutes(a.horaInicio) - this.toMinutes(b.horaInicio))
-        .forEach(horario => array.push(this.crearHorarioGroup(horario)));
+  private obtenerRangoParaDia(date: Date): { horaInicio: string; horaFin: string } | null {
+    if (!this.horario) {
+      return null;
     }
 
-    this.horariosForm.markAsPristine();
-    this.horariosForm.markAsUntouched();
-  }
+    const dia = date.getDay();
 
-  private crearHorarioGroup(horario?: Partial<HorarioAtencion>): FormGroup {
-    return this.fb.group({
-      diaSemana: [horario?.diaSemana ?? 1, Validators.required],
-      horaInicio: [this.normalizarHora(horario?.horaInicio ?? '08:00'), Validators.required],
-      horaFin: [this.normalizarHora(horario?.horaFin ?? '12:00'), Validators.required],
-      activo: [horario?.activo ?? true]
-    });
+    if (dia < this.horario.diaInicio || dia > this.horario.diaFin) {
+      return null;
+    }
+
+    return {
+      horaInicio: this.normalizarHora(this.horario.horaInicio),
+      horaFin: this.normalizarHora(this.horario.horaFin)
+    };
   }
 
   private normalizarHora(time: string): string {

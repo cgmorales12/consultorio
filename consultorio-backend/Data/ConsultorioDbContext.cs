@@ -104,7 +104,10 @@ namespace ConsultorioMedico.API.Data
             // Configuración para Horarios de atención
             modelBuilder.Entity<HorarioAtencionModel>(entity =>
             {
-                entity.Property(e => e.DiaSemana)
+                entity.Property(e => e.DiaInicio)
+                      .HasConversion<int>();
+
+                entity.Property(e => e.DiaFin)
                       .HasConversion<int>();
 
                 entity.Property(e => e.HoraInicio)
@@ -112,8 +115,6 @@ namespace ConsultorioMedico.API.Data
 
                 entity.Property(e => e.HoraFin)
                       .HasColumnType("time");
-
-                entity.HasIndex(e => new { e.DiaSemana, e.HoraInicio, e.HoraFin });
             });
 
             // No se definen datos semilla para permitir que la aplicación utilice únicamente los

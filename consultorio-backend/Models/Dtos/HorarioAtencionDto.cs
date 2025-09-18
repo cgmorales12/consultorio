@@ -4,12 +4,12 @@ namespace ConsultorioMedico.API.Models.Dtos
     {
         public int HorarioAtencionId { get; set; }
 
-        public DayOfWeek DiaSemana { get; set; }
+        public int DiaInicio { get; set; }
 
         public string HoraInicio { get; set; } = string.Empty;
 
-        public string HoraFin { get; set; } = string.Empty;
+        public int DiaFin { get; set; }
 
-        public bool Activo { get; set; }
+        public string HoraFin { get; set; } = string.Empty;
     }
 }
