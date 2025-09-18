@@ -4,6 +4,7 @@ using ConsultorioMedico.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConsultorioMedico.Migrations
 {
     [DbContext(typeof(ConsultorioDbContext))]
-    partial class ConsultorioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251001090000_UpdateHorariosAtencionSchema")]
+    partial class UpdateHorariosAtencionSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -194,19 +197,19 @@ namespace ConsultorioMedico.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("HorarioAtencionId"));
 
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("FinAtencion")
+                        .HasColumnType("datetime");
 
-                    b.Property<TimeSpan>("HoraFin")
-                        .HasColumnType("time");
+                    b.Property<DateTime?>("FinFeriado")
+                        .HasColumnType("datetime");
 
-                    b.Property<TimeSpan>("HoraInicio")
-                        .HasColumnType("time");
+                    b.Property<DateTime>("InicioAtencion")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("InicioFeriado")
+                        .HasColumnType("datetime");
 
                     b.HasKey("HorarioAtencionId");
-
-                    b.HasIndex("Fecha")
-                        .IsUnique();
 
                     b.ToTable("HorariosAtencion");
                 });

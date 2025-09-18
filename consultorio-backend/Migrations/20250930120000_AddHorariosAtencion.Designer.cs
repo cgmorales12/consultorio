@@ -4,6 +4,7 @@ using ConsultorioMedico.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConsultorioMedico.Migrations
 {
     [DbContext(typeof(ConsultorioDbContext))]
-    partial class ConsultorioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250930120000_AddHorariosAtencion")]
+    partial class AddHorariosAtencion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -194,8 +197,11 @@ namespace ConsultorioMedico.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("HorarioAtencionId"));
 
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("date");
+                    b.Property<bool>("Activo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("DiaSemana")
+                        .HasColumnType("int");
 
                     b.Property<TimeSpan>("HoraFin")
                         .HasColumnType("time");
@@ -205,8 +211,7 @@ namespace ConsultorioMedico.Migrations
 
                     b.HasKey("HorarioAtencionId");
 
-                    b.HasIndex("Fecha")
-                        .IsUnique();
+                    b.HasIndex("DiaSemana", "HoraInicio", "HoraFin");
 
                     b.ToTable("HorariosAtencion");
                 });

@@ -19,6 +19,8 @@ namespace ConsultorioMedico.API.Data
 
         public DbSet<CitaModel> Citas { get; set; }
 
+        public DbSet<HorarioAtencionModel> HorariosAtencion { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -97,6 +99,22 @@ namespace ConsultorioMedico.API.Data
                       .WithMany(p => p.Citas)
                       .HasForeignKey(e => e.PacienteId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuración para Horarios de atención
+            modelBuilder.Entity<HorarioAtencionModel>(entity =>
+            {
+                entity.Property(e => e.Fecha)
+                      .HasColumnType("date");
+
+                entity.Property(e => e.HoraInicio)
+                      .HasColumnType("time");
+
+                entity.Property(e => e.HoraFin)
+                      .HasColumnType("time");
+
+                entity.HasIndex(e => e.Fecha)
+                      .IsUnique();
             });
 
             // No se definen datos semilla para permitir que la aplicación utilice únicamente los
