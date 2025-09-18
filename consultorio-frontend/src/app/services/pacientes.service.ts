@@ -136,7 +136,7 @@ export class PacientesService {
       apellidos: api.apellidos,
       nombreCompleto: `${api.nombres} ${api.apellidos}`.trim(),
       fechaNacimiento,
-      edad: this.calcularEdad(fechaNacimiento),
+      edad: this.calcularEdadDetallada(fechaNacimiento),
       genero: this.normalizarGenero(api.genero),
       telefono: api.telefono ?? undefined,
       celular: api.celular ?? undefined,
@@ -245,17 +245,31 @@ export class PacientesService {
     return 'Otro';
   }
 
-  private calcularEdad(fechaNacimiento: Date): number {
+  private calcularEdadDetallada(fechaNacimiento: Date): string {
     const hoy = new Date();
     const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mesActual = hoy.getMonth();
-    const mesNacimiento = nacimiento.getMonth();
 
-    if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
+    let anios = hoy.getFullYear() - nacimiento.getFullYear();
+    let meses = hoy.getMonth() - nacimiento.getMonth();
+    let dias = hoy.getDate() - nacimiento.getDate();
+
+    if (dias < 0) {
+      meses--;
+      const diasMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate();
+      dias += diasMesAnterior;
     }
 
-    return edad;
+    if (meses < 0) {
+      anios--;
+      meses += 12;
+    }
+
+    const partes = [
+      `${anios} ${anios === 1 ? 'año' : 'años'}`,
+      `${meses} ${meses === 1 ? 'mes' : 'meses'}`,
+      `${dias} ${dias === 1 ? 'día' : 'días'}`
+    ];
+
+    return `${partes[0]}, ${partes[1]} y ${partes[2]}`;
   }
 }

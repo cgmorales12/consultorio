@@ -29,7 +29,7 @@ namespace ConsultorioMedico.API.Data
                 entity.HasIndex(e => e.Cedula).IsUnique();
                 entity.Property(e => e.Cedula).IsRequired().HasMaxLength(10);
 
-                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.Email);
                 entity.Property(e => e.Email).HasMaxLength(100);
             });
 

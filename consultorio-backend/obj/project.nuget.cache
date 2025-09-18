@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "RRfN4g2Htvw=",
+  "dgSpecHash": "sRoxC6c74j8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\CMG\\Downloads\\consultorio-codex-add-notification-for-save-button-success (3)\\consultorio-codex-add-notification-for-save-button-success\\consultorio-backend\\ConsultorioMedico.csproj",
+  "projectFilePath": "C:\\Users\\CMG\\Downloads\\consultorio-codex-permitir-correos-duplicados-en-registro (1)\\consultorio-codex-permitir-correos-duplicados-en-registro\\consultorio-backend\\ConsultorioMedico.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\CMG\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\CMG\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

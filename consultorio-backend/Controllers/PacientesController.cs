@@ -94,18 +94,7 @@ namespace ConsultorioMedico.API.Controllers
                     return BadRequest(new
                     {
                         success = false,
-                        message = $"Ya existe un paciente con la cédula {paciente.Cedula}"
-                    });
-                }
-
-                // Validar email único si se proporciona
-                if (!string.IsNullOrEmpty(paciente.Email) &&
-                    await _context.Pacientes.AnyAsync(p => p.Email == paciente.Email))
-                {
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = $"Ya existe un paciente con el email {paciente.Email}"
+                        message = "El usuario ya se encuentra registrado."
                     });
                 }
 

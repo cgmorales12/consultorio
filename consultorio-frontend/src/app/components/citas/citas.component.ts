@@ -310,7 +310,7 @@ export class CitasComponent implements OnInit, OnDestroy {
         nombres: nuevoPaciente.nombres,
         apellidos: nuevoPaciente.apellidos,
         fechaNacimiento: new Date(nuevoPaciente.fechaNacimiento),
-        edad: 0,
+        edad: '',
         genero: (nuevoPaciente.genero ?? 'Otro') as Paciente['genero'],
         telefono: nuevoPaciente.telefono ? nuevoPaciente.telefono : undefined,
         email: nuevoPaciente.email ? nuevoPaciente.email : undefined,

@@ -1,5 +1,6 @@
 // src/app/components/pacientes/pacientes.component.ts
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PacientesService } from '../../services/pacientes.service';
@@ -149,7 +150,7 @@ export class PacientesComponent implements OnInit {
       nombres: formData.nombres,
       apellidos: formData.apellidos,
       fechaNacimiento: new Date(formData.fechaNacimiento),
-      edad: 0, // Se recalcula al recibir la respuesta del servicio
+      edad: '', // Se recalcula al recibir la respuesta del servicio
       genero: formData.genero,
       telefono: formData.telefono,
       direccion: formData.direccion,
@@ -173,7 +174,7 @@ export class PacientesComponent implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Error al guardar paciente:', error);
-          alert('Error al guardar el paciente');
+          alert(this.obtenerMensajeError(error, 'Error al guardar el paciente'));
         }
       });
     } else {
@@ -185,7 +186,7 @@ export class PacientesComponent implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Error al guardar paciente:', error);
-          alert('Error al guardar el paciente');
+          alert(this.obtenerMensajeError(error, 'Error al guardar el paciente'));
         }
       });
     }
@@ -213,6 +214,21 @@ export class PacientesComponent implements OnInit {
         }
       });
     }
+  }
+
+  private obtenerMensajeError(error: unknown, mensajePorDefecto: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const mensaje = error.error?.message ?? error.error?.Message ?? error.statusText;
+      if (mensaje && mensaje.trim().length > 0) {
+        return mensaje;
+      }
+    }
+
+    if (typeof error === 'string' && error.trim().length > 0) {
+      return error;
+    }
+
+    return mensajePorDefecto;
   }
 
   // Cerrar formulario

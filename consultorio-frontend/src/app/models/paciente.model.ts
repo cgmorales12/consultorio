@@ -5,7 +5,7 @@ export interface Paciente {
   nombres: string;
   apellidos: string;
   fechaNacimiento: Date;
-  edad: number;
+  edad: string;
   genero: 'M' | 'F' | 'Otro';
   telefono?: string;
   celular?: string;
