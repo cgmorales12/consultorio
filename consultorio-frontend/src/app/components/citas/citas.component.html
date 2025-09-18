@@ -32,6 +32,65 @@
     </div>
   </header>
 
+  <section class="horarios-atencion">
+    <div class="horarios-atencion__header">
+      <div>
+        <h3><i class="fas fa-clock"></i> Horario de atención</h3>
+        <p>Define los días y rangos horarios en los que el consultorio ofrecerá citas.</p>
+      </div>
+      <button type="button" class="btn-agregar-horario" (click)="agregarHorario()">
+        <i class="fas fa-plus"></i>
+        Añadir horario
+      </button>
+    </div>
+
+    <form [formGroup]="horariosForm" (ngSubmit)="guardarHorarios()" class="horarios-atencion__form">
+      <div formArrayName="horarios" class="horarios-atencion__list">
+        <div class="horario-item" *ngFor="let horarioControl of horariosArray.controls; let i = index" [formGroupName]="i">
+          <div class="horario-item__field">
+            <label>Día</label>
+            <select formControlName="diaSemana">
+              <option *ngFor="let dia of diasSemana" [value]="dia.value">{{ dia.label }}</option>
+            </select>
+          </div>
+          <div class="horario-item__field">
+            <label>Hora inicio</label>
+            <input type="time" formControlName="horaInicio" step="1800">
+          </div>
+          <div class="horario-item__field">
+            <label>Hora fin</label>
+            <input type="time" formControlName="horaFin" step="1800">
+          </div>
+          <label class="horario-item__activo">
+            <input type="checkbox" formControlName="activo">
+            Activo
+          </label>
+          <button
+            type="button"
+            class="icon-button icon-button--danger"
+            (click)="eliminarHorario(i)"
+            [disabled]="horariosArray.length === 1"
+            aria-label="Eliminar horario"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="horarios-atencion__feedback" *ngIf="mensajeHorarioError || mensajeHorarioExito">
+        <span class="mensaje-error" *ngIf="mensajeHorarioError">{{ mensajeHorarioError }}</span>
+        <span class="mensaje-exito" *ngIf="mensajeHorarioExito">{{ mensajeHorarioExito }}</span>
+      </div>
+
+      <div class="horarios-atencion__actions">
+        <button type="submit" class="btn-guardar-horario" [disabled]="guardandoHorarios">
+          <i class="fas" [ngClass]="guardandoHorarios ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ guardandoHorarios ? 'Guardando...' : 'Guardar horarios' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
   <section class="nueva-cita">
     <div class="nueva-cita__header">
       <h3><i class="fas fa-calendar-plus"></i> Programar nueva cita</h3>
@@ -155,12 +214,22 @@
         <label class="required-label">
           <span>Hora de inicio</span>
           <span class="required-indicator">*</span>
-          <input type="time" formControlName="horaInicio" required aria-required="true">
+          <select
+            formControlName="horaInicio"
+            required
+            aria-required="true"
+            (change)="onHoraInicioSelected($any($event.target).value)"
+          >
+            <option value="">Selecciona un horario</option>
+            <option *ngFor="let slot of availableSlots" [value]="slot.start">
+              {{ slot.start }} - {{ slot.end }}
+            </option>
+          </select>
         </label>
         <label class="required-label">
           <span>Hora de fin</span>
           <span class="required-indicator">*</span>
-          <input type="time" formControlName="horaFin" required aria-required="true">
+          <input type="time" formControlName="horaFin" required aria-required="true" readonly>
         </label>
       </div>
 
@@ -219,7 +288,7 @@
       <span class="slot-chip" *ngFor="let slot of availableSlots">{{ slot.start }} - {{ slot.end }}</span>
     </ng-container>
     <ng-template #sinDisponibilidad>
-      <p class="empty">Todos los bloques del día están ocupados.</p>
+      <p class="empty">No hay horarios disponibles para este día. Revisa la configuración de atención o selecciona otra fecha.</p>
     </ng-template>
   </section>
 
@@ -269,6 +338,15 @@
               >
                 <i class="fas" [ngClass]="action.icon"></i>
                 <span>{{ action.label }}</span>
+              </button>
+              <button
+                type="button"
+                class="action-button action-button--danger"
+                [disabled]="isUpdating(cita.citaId)"
+                (click)="eliminarCita(cita)"
+              >
+                <i class="fas fa-trash-alt"></i>
+                <span>Eliminar</span>
               </button>
               <span class="action-loading" *ngIf="isUpdating(cita.citaId)">
                 <i class="fas fa-spinner fa-spin"></i>

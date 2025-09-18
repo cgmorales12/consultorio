@@ -120,6 +120,43 @@ try
             Console.WriteLine("Plantillas de consulta iniciales creadas.");
         }
 
+        if (!context.HorariosAtencion.Any())
+        {
+            var diasLaborables = new[]
+            {
+                DayOfWeek.Monday,
+                DayOfWeek.Tuesday,
+                DayOfWeek.Wednesday,
+                DayOfWeek.Thursday,
+                DayOfWeek.Friday
+            };
+
+            var horarios = new List<HorarioAtencionModel>();
+
+            foreach (var dia in diasLaborables)
+            {
+                horarios.Add(new HorarioAtencionModel
+                {
+                    DiaSemana = dia,
+                    HoraInicio = new TimeSpan(8, 0, 0),
+                    HoraFin = new TimeSpan(11, 30, 0),
+                    Activo = true
+                });
+
+                horarios.Add(new HorarioAtencionModel
+                {
+                    DiaSemana = dia,
+                    HoraInicio = new TimeSpan(14, 0, 0),
+                    HoraFin = new TimeSpan(17, 30, 0),
+                    Activo = true
+                });
+            }
+
+            context.HorariosAtencion.AddRange(horarios);
+            context.SaveChanges();
+            Console.WriteLine("Horarios de atención iniciales creados.");
+        }
+
         Console.WriteLine("Base de datos verificada/creada exitosamente.");
     }
 }

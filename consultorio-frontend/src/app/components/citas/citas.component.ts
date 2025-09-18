@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject, interval } from 'rxjs';
 import { finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AgendaSemanalDia, Cita, CitaPayload, DailyStats, EstadoCita } from '../../models/cita.model';
+import { HorarioAtencion, HorarioAtencionPayload } from '../../models/horario-atencion.model';
 import { CitasService } from '../../services/citas.service';
 import { PacientesService } from '../../services/pacientes.service';
 import { Paciente } from '../../models/paciente.model';
+import { HorariosService } from '../../services/horarios.service';
 
 type VistaCitas = 'agenda' | 'semana' | 'lista';
 
@@ -42,6 +44,22 @@ export class CitasComponent implements OnInit, OnDestroy {
   allAppointments: Cita[] = [];
   stats: DailyStats | null = null;
   availableSlots: { start: string; end: string }[] = [];
+  horarios: HorarioAtencion[] = [];
+
+  horariosForm: FormGroup;
+  guardandoHorarios = false;
+  mensajeHorarioExito?: string;
+  mensajeHorarioError?: string;
+
+  diasSemana = [
+    { value: 1, label: 'Lunes' },
+    { value: 2, label: 'Martes' },
+    { value: 3, label: 'Miércoles' },
+    { value: 4, label: 'Jueves' },
+    { value: 5, label: 'Viernes' },
+    { value: 6, label: 'Sábado' },
+    { value: 0, label: 'Domingo' }
+  ];
 
   loadingDaily = false;
   loadingWeekly = false;
@@ -68,21 +86,21 @@ export class CitasComponent implements OnInit, OnDestroy {
   };
 
   private readonly destroy$ = new Subject<void>();
-  private readonly workRanges = [
-    { start: '08:00', end: '11:30' },
-    { start: '14:00', end: '17:30' }
-  ];
-
   constructor(
     private readonly citasService: CitasService,
     private readonly fb: FormBuilder,
-    private readonly pacientesService: PacientesService
+    private readonly pacientesService: PacientesService,
+    private readonly horariosService: HorariosService
   ) {
     this.citaForm = this.crearFormularioCita();
+    this.horariosForm = this.fb.group({
+      horarios: this.fb.array<FormGroup>([])
+    });
   }
 
   ngOnInit(): void {
     this.cargarPacientes();
+    this.cargarHorarios();
     this.refreshAll();
     interval(30000)
       .pipe(takeUntil(this.destroy$))
@@ -131,6 +149,10 @@ export class CitasComponent implements OnInit, OnDestroy {
     return this.citaForm.get('nuevoPaciente') as FormGroup;
   }
 
+  get horariosArray(): FormArray<FormGroup> {
+    return this.horariosForm.get('horarios') as FormArray<FormGroup>;
+  }
+
   setView(view: VistaCitas): void {
     if (this.view === view) {
       return;
@@ -154,6 +176,9 @@ export class CitasComponent implements OnInit, OnDestroy {
     this.selectedDate = nextDate;
     this.selectedDateInput = this.toDateString(this.selectedDate);
     this.citaForm.get('fecha')?.setValue(this.selectedDateInput);
+    this.citaForm.get('horaInicio')?.setValue('', { emitEvent: false });
+    this.citaForm.get('horaFin')?.setValue('', { emitEvent: false });
+    this.availableSlots = [];
     this.loadDailyAppointments(true);
     this.loadDailyStats(true);
     this.loadWeeklyAppointments(false);
@@ -167,6 +192,9 @@ export class CitasComponent implements OnInit, OnDestroy {
     this.selectedDate = new Date(`${value}T00:00:00`);
     this.selectedDateInput = value;
     this.citaForm.get('fecha')?.setValue(this.selectedDateInput);
+    this.citaForm.get('horaInicio')?.setValue('', { emitEvent: false });
+    this.citaForm.get('horaFin')?.setValue('', { emitEvent: false });
+    this.availableSlots = [];
     this.loadDailyAppointments(true);
     this.loadDailyStats(true);
     this.loadWeeklyAppointments(false);
@@ -182,7 +210,7 @@ export class CitasComponent implements OnInit, OnDestroy {
       next: citas => {
         this.dailyAppointments = citas;
         this.loadingDaily = false;
-        this.availableSlots = this.calculateAvailableSlots(citas);
+        this.updateAvailableSlots(citas);
       },
       error: error => {
         console.error('No se pudieron cargar las citas del día', error);
@@ -246,6 +274,24 @@ export class CitasComponent implements OnInit, OnDestroy {
     });
   }
 
+  cargarHorarios(): void {
+    this.mensajeHorarioError = undefined;
+    this.horariosService.obtenerHorarios().subscribe({
+      next: horarios => {
+        this.horarios = horarios;
+        this.rebuildHorariosForm(horarios);
+        this.updateAvailableSlots();
+      },
+      error: error => {
+        console.error('No se pudieron cargar los horarios de atención', error);
+        this.horarios = [];
+        this.rebuildHorariosForm([]);
+        this.availableSlots = [];
+        this.mensajeHorarioError = 'No se pudieron cargar los horarios de atención.';
+      }
+    });
+  }
+
   cargarPacientes(seleccionarId?: number): void {
     this.cargandoPacientes = true;
     const pacienteActual = this.citaForm?.get('pacienteId')?.value as number | null;
@@ -288,6 +334,27 @@ export class CitasComponent implements OnInit, OnDestroy {
     }
 
     const valores = this.citaForm.getRawValue();
+    if (!this.availableSlots.length) {
+      this.mensajeCitaError = 'No hay horarios disponibles para la fecha seleccionada.';
+      return;
+    }
+
+    if (!valores.horaInicio || !valores.horaFin) {
+      this.mensajeCitaError = 'Selecciona un horario disponible para agendar la cita.';
+      return;
+    }
+
+    const slotSeleccionado = this.availableSlots.find(
+      slot => slot.start === valores.horaInicio && slot.end === valores.horaFin
+    );
+
+    if (!slotSeleccionado) {
+      this.mensajeCitaError = 'El horario seleccionado ya no está disponible. Actualiza la lista de horarios.';
+      this.updateAvailableSlots();
+      return;
+    }
+
+    this.citaForm.get('horaFin')?.setValue(slotSeleccionado.end, { emitEvent: false });
     let nuevoPacienteId: number | null = null;
 
     this.guardandoCita = true;
@@ -348,6 +415,72 @@ export class CitasComponent implements OnInit, OnDestroy {
       });
   }
 
+  onHoraInicioSelected(value: string): void {
+    if (!value) {
+      this.citaForm.get('horaFin')?.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const slot = this.availableSlots.find(s => s.start === value);
+    if (slot) {
+      this.citaForm.get('horaFin')?.setValue(slot.end, { emitEvent: false });
+    }
+  }
+
+  agregarHorario(): void {
+    this.horariosArray.push(this.crearHorarioGroup());
+  }
+
+  eliminarHorario(index: number): void {
+    this.horariosArray.removeAt(index);
+  }
+
+  guardarHorarios(): void {
+    this.mensajeHorarioExito = undefined;
+    this.mensajeHorarioError = undefined;
+
+    if (!this.horariosArray.length) {
+      this.mensajeHorarioError = 'Debe registrar al menos un horario de atención.';
+      return;
+    }
+
+    if (this.horariosForm.invalid) {
+      this.horariosArray.controls.forEach(control => control.markAllAsTouched());
+      this.mensajeHorarioError = 'Revisa los campos resaltados del horario.';
+      return;
+    }
+
+    const horariosPayload: HorarioAtencionPayload[] = this.horariosArray.controls.map(control => ({
+      diaSemana: Number(control.get('diaSemana')?.value ?? 0),
+      horaInicio: this.normalizarHora(control.get('horaInicio')?.value ?? ''),
+      horaFin: this.normalizarHora(control.get('horaFin')?.value ?? ''),
+      activo: Boolean(control.get('activo')?.value)
+    }));
+
+    this.guardandoHorarios = true;
+
+    this.horariosService
+      .guardarHorarios(horariosPayload)
+      .pipe(finalize(() => (this.guardandoHorarios = false)))
+      .subscribe({
+        next: horarios => {
+          this.horarios = horarios;
+          this.mensajeHorarioExito = 'Horarios actualizados correctamente.';
+          this.rebuildHorariosForm(horarios);
+          this.updateAvailableSlots();
+        },
+        error: error => {
+          console.error('No se pudieron guardar los horarios de atención', error);
+          this.mensajeHorarioError = 'No se pudieron guardar los horarios de atención. Intenta nuevamente.';
+        }
+      });
+  }
+
+  getDiaSemanaLabel(dia: number): string {
+    const encontrado = this.diasSemana.find(item => item.value === dia);
+    return encontrado ? encontrado.label : 'Desconocido';
+  }
+
   executeAction(cita: Cita, action: QuickAction): void {
     this.updating.add(cita.citaId);
     this.citasService.updateEstado(cita.citaId, action.estado).subscribe({
@@ -360,6 +493,31 @@ export class CitasComponent implements OnInit, OnDestroy {
       },
       error: error => {
         console.error('No se pudo actualizar el estado de la cita', error);
+        this.updating.delete(cita.citaId);
+      }
+    });
+  }
+
+  eliminarCita(cita: Cita): void {
+    const pacienteLabel = cita.pacienteNombre || `Paciente #${cita.pacienteId}`;
+    const confirmado = confirm(
+      `¿Deseas eliminar la cita programada para las ${cita.horaInicio} del paciente ${pacienteLabel}?`
+    );
+
+    if (!confirmado) {
+      return;
+    }
+
+    this.updating.add(cita.citaId);
+    this.citasService.delete(cita.citaId).subscribe({
+      next: () => {
+        this.updating.delete(cita.citaId);
+        this.mensajeCitaExito = 'Cita eliminada correctamente.';
+        this.refreshAll();
+      },
+      error: error => {
+        console.error('No se pudo eliminar la cita', error);
+        this.mensajeCitaError = 'No se pudo eliminar la cita. Intenta nuevamente.';
         this.updating.delete(cita.citaId);
       }
     });
@@ -437,6 +595,8 @@ export class CitasComponent implements OnInit, OnDestroy {
     });
 
     this.configurarValidadoresPaciente(form, 'existente');
+
+    form.get('horaFin')?.disable({ emitEvent: false });
 
     form.get('modoPaciente')?.valueChanges.subscribe(modo => {
       const valor = (modo ?? 'existente') as ModoPaciente;
@@ -516,6 +676,7 @@ export class CitasComponent implements OnInit, OnDestroy {
     });
 
     this.configurarValidadoresPaciente(this.citaForm, 'existente');
+    this.citaForm.get('horaFin')?.disable({ emitEvent: false });
     this.citaForm.markAsPristine();
     this.citaForm.markAsUntouched();
   }
@@ -526,8 +687,8 @@ export class CitasComponent implements OnInit, OnDestroy {
     return {
       pacienteId: Number(pacienteId),
       fecha: valores.fecha,
-      horaInicio: (valores.horaInicio ?? '').toString().trim(),
-      horaFin: (valores.horaFin ?? '').toString().trim(),
+      horaInicio: this.normalizarHora((valores.horaInicio ?? '').toString().trim()),
+      horaFin: this.normalizarHora((valores.horaFin ?? '').toString().trim()),
       motivo: motivo || undefined,
       notas: notas || undefined
     };
@@ -553,48 +714,108 @@ export class CitasComponent implements OnInit, OnDestroy {
   }
 
   private calculateAvailableSlots(citas: Cita[]): { start: string; end: string }[] {
-    if (!citas.length) {
-      return this.workRanges.map(range => ({ ...range }));
+    const horariosDia = this.getHorariosParaDia(this.selectedDate);
+    if (!horariosDia.length) {
+      return [];
     }
 
-    const sorted = [...citas].sort((a, b) => this.toMinutes(a.horaInicio) - this.toMinutes(b.horaInicio));
+    const ocupados = new Set<number>();
+    citas.forEach(cita => {
+      const inicio = this.toMinutes(cita.horaInicio);
+      const fin = this.toMinutes(cita.horaFin);
+      for (let cursor = inicio; cursor < fin; cursor += 30) {
+        ocupados.add(cursor);
+      }
+    });
+
     const slots: { start: string; end: string }[] = [];
+    const ordenados = [...horariosDia].sort((a, b) => this.toMinutes(a.horaInicio) - this.toMinutes(b.horaInicio));
 
-    for (const range of this.workRanges) {
-      const rangeStart = this.toMinutes(range.start);
-      const rangeEnd = this.toMinutes(range.end);
-      let cursor = rangeStart;
-
-      for (const cita of sorted) {
-        const citaStart = this.toMinutes(cita.horaInicio);
-        const citaEnd = this.toMinutes(cita.horaFin);
-
-        if (citaEnd <= rangeStart || citaStart >= rangeEnd) {
+    for (const horario of ordenados) {
+      const inicio = this.toMinutes(horario.horaInicio);
+      const fin = this.toMinutes(horario.horaFin);
+      for (let cursor = inicio; cursor <= fin - 30; cursor += 30) {
+        if (ocupados.has(cursor)) {
           continue;
         }
 
-        if (citaStart > cursor) {
-          const libreInicio = this.toTime(cursor);
-          const libreFin = this.toTime(Math.min(citaStart, rangeEnd));
-          if (libreInicio !== libreFin) {
-            slots.push({ start: libreInicio, end: libreFin });
-          }
-        }
-
-        cursor = Math.max(cursor, Math.min(citaEnd, rangeEnd));
-      }
-
-      if (cursor < rangeEnd) {
-        slots.push({ start: this.toTime(cursor), end: this.toTime(rangeEnd) });
+        const finSlot = cursor + 30;
+        slots.push({ start: this.toTime(cursor), end: this.toTime(finSlot) });
       }
     }
 
-    return slots.filter(slot => slot.start !== slot.end);
+    return slots;
+  }
+
+  private updateAvailableSlots(citas: Cita[] = this.dailyAppointments): void {
+    const slots = this.calculateAvailableSlots(citas);
+    this.availableSlots = slots;
+
+    const horaInicioControl = this.citaForm.get('horaInicio');
+    const horaFinControl = this.citaForm.get('horaFin');
+    const seleccionado = (horaInicioControl?.value as string) ?? '';
+
+    if (seleccionado) {
+      const slot = slots.find(item => item.start === seleccionado);
+      if (slot) {
+        horaFinControl?.setValue(slot.end, { emitEvent: false });
+      } else {
+        horaInicioControl?.setValue('', { emitEvent: false });
+        horaFinControl?.setValue('', { emitEvent: false });
+      }
+    }
+  }
+
+  private getHorariosParaDia(date: Date): HorarioAtencion[] {
+    const dia = date.getDay();
+    return this.horarios.filter(h => h.activo && h.diaSemana === dia);
+  }
+
+  private rebuildHorariosForm(horarios: HorarioAtencion[]): void {
+    const array = this.horariosArray;
+    array.clear();
+
+    if (!horarios.length) {
+      array.push(this.crearHorarioGroup());
+    } else {
+      horarios
+        .sort((a, b) => a.diaSemana - b.diaSemana || this.toMinutes(a.horaInicio) - this.toMinutes(b.horaInicio))
+        .forEach(horario => array.push(this.crearHorarioGroup(horario)));
+    }
+
+    this.horariosForm.markAsPristine();
+    this.horariosForm.markAsUntouched();
+  }
+
+  private crearHorarioGroup(horario?: Partial<HorarioAtencion>): FormGroup {
+    return this.fb.group({
+      diaSemana: [horario?.diaSemana ?? 1, Validators.required],
+      horaInicio: [this.normalizarHora(horario?.horaInicio ?? '08:00'), Validators.required],
+      horaFin: [this.normalizarHora(horario?.horaFin ?? '12:00'), Validators.required],
+      activo: [horario?.activo ?? true]
+    });
+  }
+
+  private normalizarHora(time: string): string {
+    if (!time) {
+      return '';
+    }
+
+    const parts = time.split(':');
+    const hours = (parts[0] ?? '00').padStart(2, '0');
+    const minutes = (parts[1] ?? '00').padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
   private toMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + (minutes || 0);
+    if (!time) {
+      return 0;
+    }
+
+    const parts = time.split(':');
+    const hours = Number(parts[0] ?? 0);
+    const minutes = Number(parts[1] ?? 0);
+    return hours * 60 + minutes;
   }
 
   private toTime(totalMinutes: number): string {

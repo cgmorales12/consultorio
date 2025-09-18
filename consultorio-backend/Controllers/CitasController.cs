@@ -12,12 +12,6 @@ namespace ConsultorioMedico.API.Controllers
     [Route("api/[controller]")]
     public class CitasController : ControllerBase
     {
-        private static readonly (TimeSpan Inicio, TimeSpan Fin)[] JornadaLaboral = new[]
-        {
-            (new TimeSpan(8, 0, 0), new TimeSpan(11, 30, 0)),
-            (new TimeSpan(14, 0, 0), new TimeSpan(17, 30, 0))
-        };
-
         private readonly ConsultorioDbContext _context;
         private readonly ILogger<CitasController> _logger;
 
@@ -121,7 +115,8 @@ namespace ConsultorioMedico.API.Controllers
                 .Where(horas => horas > 0)
                 .Sum();
 
-            var horasJornada = JornadaLaboral.Sum(rango => (rango.Fin - rango.Inicio).TotalHours);
+            var horariosDia = await ObtenerHorariosActivos(fecha);
+            var horasJornada = horariosDia.Sum(rango => (rango.HoraFin - rango.HoraInicio).TotalHours);
             var horasDisponibles = Math.Max(0, horasJornada - horasOcupadas);
 
             var estadisticas = new DailyStatsDto
@@ -156,9 +151,10 @@ namespace ConsultorioMedico.API.Controllers
             var horaInicio = ParseTime(payload.HoraInicio);
             var horaFin = ParseTime(payload.HoraFin);
 
-            if (horaFin <= horaInicio)
+            var validacion = await ValidarHorarioCita(payload.Fecha.Date, horaInicio, horaFin, null);
+            if (validacion != null)
             {
-                return BadRequest(new { message = "La hora de fin debe ser mayor a la hora de inicio." });
+                return validacion;
             }
 
             var cita = new CitaModel
@@ -207,9 +203,10 @@ namespace ConsultorioMedico.API.Controllers
             var horaInicio = ParseTime(payload.HoraInicio);
             var horaFin = ParseTime(payload.HoraFin);
 
-            if (horaFin <= horaInicio)
+            var validacion = await ValidarHorarioCita(payload.Fecha.Date, horaInicio, horaFin, cita.CitaId);
+            if (validacion != null)
             {
-                return BadRequest(new { message = "La hora de fin debe ser mayor a la hora de inicio." });
+                return validacion;
             }
 
             cita.PacienteId = payload.PacienteId;
@@ -303,6 +300,67 @@ namespace ConsultorioMedico.API.Controllers
         private static string FormatearHora(TimeSpan hora)
         {
             return new DateTime(hora.Ticks).ToString("HH:mm");
+        }
+
+        private async Task<List<HorarioAtencionModel>> ObtenerHorariosActivos(DateTime fecha)
+        {
+            var diaSemana = fecha.DayOfWeek;
+            return await _context.HorariosAtencion
+                .Where(h => h.Activo && h.DiaSemana == diaSemana)
+                .OrderBy(h => h.HoraInicio)
+                .ToListAsync();
+        }
+
+        private async Task<bool> ExisteConflictoHorario(DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, int? excluirId)
+        {
+            return await _context.Citas
+                .AnyAsync(c => c.Fecha.Date == fecha.Date
+                               && (!excluirId.HasValue || c.CitaId != excluirId.Value)
+                               && c.HoraInicio < horaFin
+                               && horaInicio < c.HoraFin);
+        }
+
+        private static bool EsMultiploDeTreinta(TimeSpan time)
+        {
+            return time.TotalMinutes % 30 == 0;
+        }
+
+        private async Task<ActionResult<CitaDto>?> ValidarHorarioCita(DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, int? citaId)
+        {
+            if (horaFin <= horaInicio)
+            {
+                return BadRequest(new { message = "La hora de fin debe ser mayor a la hora de inicio." });
+            }
+
+            if (!EsMultiploDeTreinta(horaInicio) || !EsMultiploDeTreinta(horaFin))
+            {
+                return BadRequest(new { message = "Las citas solo pueden programarse en intervalos de 30 minutos." });
+            }
+
+            if ((horaFin - horaInicio).TotalMinutes != 30)
+            {
+                return BadRequest(new { message = "Cada cita debe durar exactamente 30 minutos." });
+            }
+
+            var horarios = await ObtenerHorariosActivos(fecha);
+
+            if (!horarios.Any())
+            {
+                return BadRequest(new { message = "No hay horarios de atención configurados para este día." });
+            }
+
+            var dentroDeHorario = horarios.Any(h => horaInicio >= h.HoraInicio && horaFin <= h.HoraFin);
+            if (!dentroDeHorario)
+            {
+                return BadRequest(new { message = "La cita debe estar dentro del horario de atención configurado." });
+            }
+
+            if (await ExisteConflictoHorario(fecha, horaInicio, horaFin, citaId))
+            {
+                return Conflict(new { message = "Ya existe una cita programada en ese horario." });
+            }
+
+            return null;
         }
     }
 }
