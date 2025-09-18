@@ -78,6 +78,8 @@
       </div>
 
       <form [formGroup]="horariosForm" (ngSubmit)="guardarHorarios()" class="horarios-atencion__form">
+        <h4 class="horario-dias__titulo">Días para trabajar</h4>
+
         <div formArrayName="dias" class="horario-dias">
           <div class="horario-dias__empty" *ngIf="!diasSeleccionadosControls.length">
             Selecciona en el calendario los días en los que atenderá el consultorio.
@@ -89,7 +91,10 @@
             [formGroupName]="i"
           >
             <header class="horario-dia__header">
-              <h4>{{ formatSelectedDate(diaGroup.get('fecha')?.value) }}</h4>
+              <h4 class="horario-dia__titulo">
+                <span class="horario-dia__indice">{{ i }}</span>
+                <span class="horario-dia__fecha">{{ formatSelectedDate(diaGroup.get('fecha')?.value) }}</span>
+              </h4>
               <button type="button" class="icon-button icon-button--small" (click)="eliminarDia(i)">
                 <i class="fas fa-times"></i>
               </button>

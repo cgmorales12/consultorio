@@ -99,6 +99,8 @@ export class CitasComponent implements OnInit, OnDestroy {
       dias: this.fb.array<FormGroup>([])
     });
 
+    this.calendarioActual = this.obtenerPrimerDiaMes();
+
     this.diasFormArray.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -320,9 +322,6 @@ export class CitasComponent implements OnInit, OnDestroy {
 
     this.horariosForm.markAsPristine();
     this.horariosForm.markAsUntouched();
-    if (ordenados.length) {
-      this.calendarioActual = new Date(`${ordenados[0].fecha}T00:00:00`);
-    }
     this.sincronizarHorariosLocales();
     this.generarCalendario();
     this.updateAvailableSlots();
@@ -502,8 +501,11 @@ export class CitasComponent implements OnInit, OnDestroy {
   }
 
   cambiarMes(offset: number): void {
-    const nuevoMes = new Date(this.calendarioActual);
-    nuevoMes.setMonth(nuevoMes.getMonth() + offset);
+    const nuevoMes = new Date(
+      this.calendarioActual.getFullYear(),
+      this.calendarioActual.getMonth() + offset,
+      1
+    );
     this.calendarioActual = nuevoMes;
     this.generarCalendario();
   }
@@ -603,7 +605,8 @@ export class CitasComponent implements OnInit, OnDestroy {
   }
 
   private generarCalendario(): void {
-    const referencia = new Date(this.calendarioActual.getFullYear(), this.calendarioActual.getMonth(), 1);
+    const referencia = this.obtenerPrimerDiaMes(this.calendarioActual);
+    this.calendarioActual = referencia;
     const primerDiaSemana = (referencia.getDay() + 6) % 7; // Ajuste para iniciar en lunes
     const inicio = new Date(referencia);
     inicio.setDate(referencia.getDate() - primerDiaSemana);
@@ -627,6 +630,10 @@ export class CitasComponent implements OnInit, OnDestroy {
     }
 
     this.semanasCalendario = semanas;
+  }
+
+  private obtenerPrimerDiaMes(fechaReferencia: Date = new Date()): Date {
+    return new Date(fechaReferencia.getFullYear(), fechaReferencia.getMonth(), 1);
   }
 
   private esHoy(date: Date): boolean {

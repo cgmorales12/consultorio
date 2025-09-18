@@ -245,6 +245,13 @@
   gap: 1.25rem;
 }
 
+.horario-dias__titulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
 .horario-dias {
   display: flex;
   flex-direction: column;
@@ -282,10 +289,32 @@
   gap: 0.75rem;
 }
 
-.horario-dia__header h4 {
-  margin: 0;
+.horario-dia__titulo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
   font-size: 1rem;
-  color: #32405a;
+  font-weight: 600;
+  color: #1f2937;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.horario-dia__indice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background: #1f2937;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.horario-dia__fecha {
+  display: inline-block;
 }
 
 .icon-button--small {
