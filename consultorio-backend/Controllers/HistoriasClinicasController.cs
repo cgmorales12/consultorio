@@ -151,7 +151,7 @@ namespace ConsultorioMedico.API.Controllers
                 PesoKg = payload.PesoKg,
                 EstaturaCm = payload.EstaturaCm,
                 TemperaturaC = payload.TemperaturaC,
-                SaturacionPorcentaje = payload.SaturacionPorcentaje ?? 0m,
+                SaturacionPorcentaje = payload.SaturacionPorcentaje,
                 FrecuenciaCardiaca = payload.FrecuenciaCardiaca,
                 PresionSistolica = payload.PresionSistolica,
                 PresionDiastolica = payload.PresionDiastolica,
@@ -214,7 +214,7 @@ namespace ConsultorioMedico.API.Controllers
             consulta.PesoKg = payload.PesoKg;
             consulta.EstaturaCm = payload.EstaturaCm;
             consulta.TemperaturaC = payload.TemperaturaC;
-            consulta.SaturacionPorcentaje = payload.SaturacionPorcentaje ?? 0m;
+            consulta.SaturacionPorcentaje = payload.SaturacionPorcentaje;
             consulta.FrecuenciaCardiaca = payload.FrecuenciaCardiaca;
             consulta.PresionSistolica = payload.PresionSistolica;
             consulta.PresionDiastolica = payload.PresionDiastolica;
@@ -270,6 +270,7 @@ namespace ConsultorioMedico.API.Controllers
                 UltimaActualizacion = historia.UltimaActualizacion,
                 Consultas = consultas
                     .OrderByDescending(c => c.FechaConsulta)
+                    .ThenByDescending(c => c.ConsultaMedicaId)
                     .Select(MapConsultaMedica)
                     .ToList()
             };
@@ -308,20 +309,25 @@ namespace ConsultorioMedico.API.Controllers
             consulta.ClasificacionImc = ClasificarImc(consulta.Imc);
         }
 
-        private static decimal? CalcularImc(decimal pesoKg, decimal estaturaCm)
+        private static decimal? CalcularImc(decimal? pesoKg, decimal? estaturaCm)
         {
-            if (pesoKg <= 0 || estaturaCm <= 0)
+            if (!pesoKg.HasValue || !estaturaCm.HasValue)
             {
                 return null;
             }
 
-            var estaturaMetros = estaturaCm / 100m;
+            if (pesoKg.Value <= 0 || estaturaCm.Value <= 0)
+            {
+                return null;
+            }
+
+            var estaturaMetros = estaturaCm.Value / 100m;
             if (estaturaMetros <= 0)
             {
                 return null;
             }
 
-            var imc = pesoKg / (estaturaMetros * estaturaMetros);
+            var imc = pesoKg.Value / (estaturaMetros * estaturaMetros);
             return Math.Round(imc, 2);
         }
 
@@ -374,9 +380,9 @@ namespace ConsultorioMedico.API.Controllers
                 alertas.Add($"Fiebre detectada ({consulta.TemperaturaC.Value} °C).");
             }
 
-            if (consulta.SaturacionPorcentaje < 92m)
+            if (consulta.SaturacionPorcentaje.HasValue && consulta.SaturacionPorcentaje.Value < 92m)
             {
-                alertas.Add($"Saturación de oxígeno baja ({consulta.SaturacionPorcentaje}%).");
+                alertas.Add($"Saturación de oxígeno baja ({consulta.SaturacionPorcentaje.Value}%).");
             }
 
             if (consulta.FrecuenciaCardiaca.HasValue && (consulta.FrecuenciaCardiaca.Value < 60 || consulta.FrecuenciaCardiaca.Value > 100))

@@ -56,8 +56,8 @@ namespace ConsultorioMedico.API.Data
                 entity.Property(e => e.Diagnostico).IsRequired().HasMaxLength(2000);
                 entity.Property(e => e.Tratamiento).IsRequired().HasMaxLength(2000);
                 entity.Property(e => e.Observaciones).HasMaxLength(2000);
-                entity.Property(e => e.PesoKg).HasColumnType("decimal(5,2)");
-                entity.Property(e => e.EstaturaCm).HasColumnType("decimal(5,2)");
+                entity.Property(e => e.PesoKg).HasColumnType("decimal(5,2)").IsRequired(false);
+                entity.Property(e => e.EstaturaCm).HasColumnType("decimal(5,2)").IsRequired(false);
                 entity.Property(e => e.TemperaturaC).HasColumnType("decimal(4,1)");
                 entity.Property(e => e.SaturacionPorcentaje).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.Imc).HasColumnType("decimal(5,2)");

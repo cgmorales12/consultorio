@@ -26,15 +26,14 @@ namespace ConsultorioMedico.API.Models.Requests
         [StringLength(2000)]
         public string? Observaciones { get; set; }
 
-        [Range(1, 500)]
-        public decimal PesoKg { get; set; }
+        [Range(typeof(decimal), "1", "500")]
+        public decimal? PesoKg { get; set; }
 
-        [Range(40, 250)]
-        public decimal EstaturaCm { get; set; }
+        [Range(typeof(decimal), "40", "250")]
+        public decimal? EstaturaCm { get; set; }
 
         public decimal? TemperaturaC { get; set; }
 
-        [Required]
         [Range(0, 100)]
         public decimal? SaturacionPorcentaje { get; set; }
 

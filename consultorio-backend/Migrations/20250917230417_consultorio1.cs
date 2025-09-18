@@ -162,10 +162,10 @@ namespace ConsultorioMedico.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Observaciones = table.Column<string>(type: "varchar(2000)", maxLength: 2000, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PesoKg = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
-                    EstaturaCm = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    PesoKg = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    EstaturaCm = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     TemperaturaC = table.Column<decimal>(type: "decimal(4,1)", nullable: true),
-                    SaturacionPorcentaje = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    SaturacionPorcentaje = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     FrecuenciaCardiaca = table.Column<int>(type: "int", nullable: true),
                     PresionSistolica = table.Column<int>(type: "int", nullable: true),
                     PresionDiastolica = table.Column<int>(type: "int", nullable: true),

@@ -18,13 +18,13 @@ namespace ConsultorioMedico.API.Models.Dtos
 
         public string? Observaciones { get; set; }
 
-        public decimal PesoKg { get; set; }
+        public decimal? PesoKg { get; set; }
 
-        public decimal EstaturaCm { get; set; }
+        public decimal? EstaturaCm { get; set; }
 
         public decimal? TemperaturaC { get; set; }
 
-        public decimal SaturacionPorcentaje { get; set; }
+        public decimal? SaturacionPorcentaje { get; set; }
 
         public int? FrecuenciaCardiaca { get; set; }
 

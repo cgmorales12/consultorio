@@ -1254,11 +1254,13 @@
           },
           "pesoKg": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "estaturaCm": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "temperaturaC": {
             "type": "number",
@@ -1267,7 +1269,8 @@
           },
           "saturacionPorcentaje": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "frecuenciaCardiaca": {
             "type": "integer",
@@ -1366,11 +1369,13 @@
           },
           "pesoKg": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "estaturaCm": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "temperaturaC": {
             "type": "number",
@@ -1379,7 +1384,8 @@
           },
           "saturacionPorcentaje": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "frecuenciaCardiaca": {
             "type": "integer",
@@ -1426,7 +1432,6 @@
           "diagnostico",
           "fechaConsulta",
           "motivoConsulta",
-          "saturacionPorcentaje",
           "sintomas",
           "tratamiento"
         ],
@@ -1466,13 +1471,15 @@
             "maximum": 500,
             "minimum": 1,
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "estaturaCm": {
             "maximum": 250,
             "minimum": 40,
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "temperaturaC": {
             "type": "number",
@@ -1483,7 +1490,8 @@
             "maximum": 100,
             "minimum": 0,
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "frecuenciaCardiaca": {
             "type": "integer",

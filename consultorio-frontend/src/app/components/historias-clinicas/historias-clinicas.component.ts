@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, distinctUntilChanged } from 'rxjs/operators';
 import { HistoriasClinicasService } from '../../services/historias-clinicas.service';
-import { ConsultaMedica, HistoriaClinica, PlantillaConsulta } from '../../models/historia-clinica.model';
+import { ConsultaMedica, ConsultaMedicaPayload, HistoriaClinica, PlantillaConsulta } from '../../models/historia-clinica.model';
 import { PacientesService } from '../../services/pacientes.service';
 import { Paciente } from '../../models/paciente.model';
 
@@ -31,6 +31,8 @@ export class HistoriasClinicasComponent implements OnInit {
   creandoHistoria = false;
   mensajeError?: string;
   mensajePlantillas?: string;
+  mensajeAntecedentesExito?: string;
+  private avisoAntecedentesTimeout?: ReturnType<typeof setTimeout>;
   pacientes: Paciente[] = [];
   pacienteControl = new FormControl<number | null>(null);
   pacienteFiltradoId: number | null = null;
@@ -57,10 +59,10 @@ export class HistoriasClinicasComponent implements OnInit {
       diagnostico: ['', [Validators.required, Validators.maxLength(2000)]],
       tratamiento: ['', [Validators.required, Validators.maxLength(2000)]],
       observaciones: [''],
-      pesoKg: [null, [Validators.required, Validators.min(1)]],
-      estaturaCm: [null, [Validators.required, Validators.min(40)]],
+      pesoKg: [null, [Validators.min(1)]],
+      estaturaCm: [null, [Validators.min(40)]],
       temperaturaC: [null],
-      saturacionPorcentaje: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      saturacionPorcentaje: [null, [Validators.min(0), Validators.max(100)]],
       frecuenciaCardiaca: [null],
       presionSistolica: [null],
       presionDiastolica: [null],
@@ -210,6 +212,11 @@ export class HistoriasClinicasComponent implements OnInit {
     this.alertasConsulta = [];
     this.bmiActual = null;
     this.bmiClasificacion = '';
+    this.mensajeAntecedentesExito = undefined;
+    if (this.avisoAntecedentesTimeout) {
+      clearTimeout(this.avisoAntecedentesTimeout);
+      this.avisoAntecedentesTimeout = undefined;
+    }
 
     this.antecedentesForm.patchValue({
       antecedentesPersonales: historia.antecedentesPersonales ?? '',
@@ -245,6 +252,11 @@ export class HistoriasClinicasComponent implements OnInit {
     }
 
     this.guardandoAntecedentes = true;
+    this.mensajeAntecedentesExito = undefined;
+    if (this.avisoAntecedentesTimeout) {
+      clearTimeout(this.avisoAntecedentesTimeout);
+      this.avisoAntecedentesTimeout = undefined;
+    }
     const payload = this.antecedentesForm.value;
 
     this.historiasService.actualizarHistoria(this.historiaSeleccionada.historiaClinicaId, payload)
@@ -253,6 +265,11 @@ export class HistoriasClinicasComponent implements OnInit {
         next: (historiaActualizada) => {
           this.actualizarListado(historiaActualizada);
           this.historiaSeleccionada = historiaActualizada;
+          this.mensajeAntecedentesExito = 'Antecedentes guardados correctamente.';
+          this.avisoAntecedentesTimeout = setTimeout(() => {
+            this.mensajeAntecedentesExito = undefined;
+            this.avisoAntecedentesTimeout = undefined;
+          }, 4000);
         },
         error: (error) => {
           console.error('No se pudieron guardar los antecedentes', error);
@@ -274,23 +291,36 @@ export class HistoriasClinicasComponent implements OnInit {
     }
 
     const valores = this.consultaForm.value;
-    const payload = {
+    const pesoValor = valores.pesoKg;
+    const estaturaValor = valores.estaturaCm;
+    const pesoKg = pesoValor !== null && pesoValor !== undefined && pesoValor !== '' ? Number(pesoValor) : undefined;
+    const estaturaCm = estaturaValor !== null && estaturaValor !== undefined && estaturaValor !== '' ? Number(estaturaValor) : undefined;
+
+    const payload: ConsultaMedicaPayload = {
       fechaConsulta: valores.fechaConsulta,
       motivoConsulta: valores.motivoConsulta,
       sintomas: valores.sintomas,
       diagnostico: valores.diagnostico,
       tratamiento: valores.tratamiento,
       observaciones: valores.observaciones || undefined,
-      pesoKg: Number(valores.pesoKg),
-      estaturaCm: Number(valores.estaturaCm),
       temperaturaC: valores.temperaturaC !== null && valores.temperaturaC !== undefined ? Number(valores.temperaturaC) : undefined,
-      saturacionPorcentaje: Number(valores.saturacionPorcentaje),
+      saturacionPorcentaje: valores.saturacionPorcentaje !== null && valores.saturacionPorcentaje !== undefined
+        ? Number(valores.saturacionPorcentaje)
+        : undefined,
       frecuenciaCardiaca: valores.frecuenciaCardiaca !== null && valores.frecuenciaCardiaca !== undefined ? Number(valores.frecuenciaCardiaca) : undefined,
       presionSistolica: valores.presionSistolica !== null && valores.presionSistolica !== undefined ? Number(valores.presionSistolica) : undefined,
       presionDiastolica: valores.presionDiastolica !== null && valores.presionDiastolica !== undefined ? Number(valores.presionDiastolica) : undefined,
       perimetroCefalicoCm: valores.perimetroCefalicoCm !== null && valores.perimetroCefalicoCm !== undefined ? Number(valores.perimetroCefalicoCm) : undefined,
       pancita: valores.pancita && valores.pancita.trim().length > 0 ? valores.pancita.trim() : undefined
     };
+
+    if (pesoKg !== undefined && !Number.isNaN(pesoKg)) {
+      payload.pesoKg = pesoKg;
+    }
+
+    if (estaturaCm !== undefined && !Number.isNaN(estaturaCm)) {
+      payload.estaturaCm = estaturaCm;
+    }
 
     this.guardandoConsulta = true;
     this.alertasConsulta = [];
@@ -420,21 +450,29 @@ export class HistoriasClinicasComponent implements OnInit {
       mensajes.push('El tratamiento es obligatorio. Registra las indicaciones terapéuticas entregadas.');
     }
 
-    if (pesoKg?.hasError('required')) {
-      mensajes.push('Ingresa el peso del paciente en kilogramos. Usa números con punto decimal, por ejemplo 70.5.');
-    } else if (pesoKg?.hasError('min')) {
-      mensajes.push('El peso debe ser mayor a 1 kg para calcular el IMC correctamente.');
+    if (
+      pesoKg?.hasError('min') &&
+      pesoKg.value !== null &&
+      pesoKg.value !== undefined &&
+      pesoKg.value !== ''
+    ) {
+      mensajes.push('Si registras el peso del paciente, debe ser mayor a 1 kg para calcular el IMC correctamente.');
     }
 
-    if (estaturaCm?.hasError('required')) {
-      mensajes.push('Ingresa la estatura del paciente en centímetros. Usa números con punto decimal, por ejemplo 165.5.');
-    } else if (estaturaCm?.hasError('min')) {
-      mensajes.push('La estatura debe ser mayor a 40 cm para calcular el IMC correctamente.');
+    if (
+      estaturaCm?.hasError('min') &&
+      estaturaCm.value !== null &&
+      estaturaCm.value !== undefined &&
+      estaturaCm.value !== ''
+    ) {
+      mensajes.push('Si registras la estatura del paciente, debe ser mayor a 40 cm para calcular el IMC correctamente.');
     }
 
-    if (saturacionPorcentaje?.hasError('required')) {
-      mensajes.push('La saturación de oxígeno es obligatoria. Ingresa el porcentaje entre 0 y 100.');
-    } else if (saturacionPorcentaje?.hasError('min') || saturacionPorcentaje?.hasError('max')) {
+    if (
+      (saturacionPorcentaje?.hasError('min') || saturacionPorcentaje?.hasError('max')) &&
+      saturacionPorcentaje?.value !== null &&
+      saturacionPorcentaje?.value !== undefined
+    ) {
       mensajes.push('La saturación de oxígeno debe estar en un rango de 0 a 100%.');
     }
 
@@ -445,10 +483,12 @@ export class HistoriasClinicasComponent implements OnInit {
 
   // Calcula el IMC provisional con los valores del formulario y actualiza la vista previa.
   private actualizarImc(): void {
-    const peso = Number(this.consultaForm.get('pesoKg')?.value);
-    const estatura = Number(this.consultaForm.get('estaturaCm')?.value);
+    const pesoValor = this.consultaForm.get('pesoKg')?.value;
+    const estaturaValor = this.consultaForm.get('estaturaCm')?.value;
+    const peso = pesoValor !== null && pesoValor !== undefined && pesoValor !== '' ? Number(pesoValor) : NaN;
+    const estatura = estaturaValor !== null && estaturaValor !== undefined && estaturaValor !== '' ? Number(estaturaValor) : NaN;
 
-    if (peso > 0 && estatura > 0) {
+    if (!Number.isNaN(peso) && peso > 0 && !Number.isNaN(estatura) && estatura > 0) {
       const estaturaMetros = estatura / 100;
       const imc = peso / (estaturaMetros * estaturaMetros);
       this.bmiActual = parseFloat(imc.toFixed(2));
@@ -517,8 +557,26 @@ export class HistoriasClinicasComponent implements OnInit {
   get historialConsultas(): ConsultaMedica[] {
     const consultas = this.historiaSeleccionada?.consultas ?? [];
 
-    return [...consultas].sort((a, b) =>
-      new Date(b.fechaConsulta).getTime() - new Date(a.fechaConsulta).getTime()
-    );
+    return [...consultas].sort((a, b) => {
+      const fechaB = Date.parse(b.fechaConsulta ?? '') || 0;
+      const fechaA = Date.parse(a.fechaConsulta ?? '') || 0;
+
+      if (fechaB !== fechaA) {
+        return fechaB - fechaA;
+      }
+
+      return (b.consultaMedicaId ?? 0) - (a.consultaMedicaId ?? 0);
+    });
+  }
+
+  // Obtiene el IMC más reciente registrado en las consultas disponibles.
+  get imcUltimoControl(): number | null {
+    for (const consulta of this.historialConsultas) {
+      if (consulta.imc !== null && consulta.imc !== undefined) {
+        return consulta.imc;
+      }
+    }
+
+    return null;
   }
 }

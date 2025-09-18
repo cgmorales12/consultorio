@@ -7,10 +7,10 @@ export interface ConsultaMedica {
   diagnostico: string;
   tratamiento: string;
   observaciones?: string;
-  pesoKg: number;
-  estaturaCm: number;
+  pesoKg: number | null;
+  estaturaCm: number | null;
   temperaturaC?: number;
-  saturacionPorcentaje: number;
+  saturacionPorcentaje?: number;
   frecuenciaCardiaca?: number;
   presionSistolica?: number;
   presionDiastolica?: number;
@@ -66,10 +66,10 @@ export interface ConsultaMedicaPayload {
   diagnostico: string;
   tratamiento: string;
   observaciones?: string;
-  pesoKg: number;
-  estaturaCm: number;
+  pesoKg?: number | null;
+  estaturaCm?: number | null;
   temperaturaC?: number;
-  saturacionPorcentaje: number;
+  saturacionPorcentaje?: number;
   frecuenciaCardiaca?: number;
   presionSistolica?: number;
   presionDiastolica?: number;

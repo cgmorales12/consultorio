@@ -82,7 +82,7 @@
           <span class="stat-label">Consultas registradas</span>
         </div>
         <div>
-          <span class="stat-value">{{ historialConsultas[0]?.imc ?? '—' }}</span>
+          <span class="stat-value">{{ imcUltimoControl !== null ? imcUltimoControl : '—' }}</span>
           <span class="stat-label">IMC último control</span>
         </div>
       </div>
@@ -122,6 +122,10 @@
             <i class="fas" [ngClass]="guardandoAntecedentes ? 'fa-spinner fa-spin' : 'fa-save'"></i>
             {{ guardandoAntecedentes ? 'Guardando...' : 'Guardar antecedentes' }}
           </button>
+          <p *ngIf="mensajeAntecedentesExito" class="mensaje-exito">
+            <i class="fas fa-check-circle"></i>
+            {{ mensajeAntecedentesExito }}
+          </p>
         </form>
       </section>
 
@@ -159,8 +163,8 @@
               <div class="detalle-col">
                 <h4>Examen físico</h4>
                 <ul>
-                  <li><i class="fas fa-weight"></i> {{ consulta.pesoKg }} kg</li>
-                  <li><i class="fas fa-ruler"></i> {{ consulta.estaturaCm }} cm</li>
+                  <li><i class="fas fa-weight"></i> {{ consulta.pesoKg != null ? consulta.pesoKg + ' kg' : '—' }}</li>
+                  <li><i class="fas fa-ruler"></i> {{ consulta.estaturaCm != null ? consulta.estaturaCm + ' cm' : '—' }}</li>
                   <li><i class="fas fa-heartbeat"></i> {{ consulta.presionSistolica || '—' }}/{{ consulta.presionDiastolica || '—' }} mmHg</li>
                   <li><i class="fas fa-tint"></i> {{ consulta.saturacionPorcentaje ?? '—' }} %</li>
                   <li><i class="fas fa-pulse"></i> {{ consulta.frecuenciaCardiaca || '—' }} lpm</li>
@@ -234,19 +238,19 @@
           <div class="examen-fisico">
             <h4>Examen físico</h4>
             <div class="examen-grid">
-              <label class="required-field">
-                <span class="label-title">Peso (kg) <span class="required-asterisk">*</span></span>
-                <input type="number" formControlName="pesoKg" min="1" step="0.1" placeholder="Ej. 70.5" required />
+              <label>
+                <span class="label-title">Peso (kg)</span>
+                <input type="number" formControlName="pesoKg" min="1" step="0.1" placeholder="Ej. 70.5" />
               </label>
-              <label class="required-field">
-                <span class="label-title">Estatura (cm) <span class="required-asterisk">*</span></span>
-                <input type="number" formControlName="estaturaCm" min="40" step="0.5" placeholder="Ej. 165.5" required />
+              <label>
+                <span class="label-title">Estatura (cm)</span>
+                <input type="number" formControlName="estaturaCm" min="40" step="0.5" placeholder="Ej. 165.5" />
               </label>
               <label>Temperatura (°C)
                 <input type="number" formControlName="temperaturaC" step="0.1" />
               </label>
-              <label class="required-field">
-                <span class="label-title">Saturación (%) <span class="required-asterisk">*</span></span>
+              <label>
+                <span class="label-title">Saturación (%)</span>
                 <input
                   type="number"
                   formControlName="saturacionPorcentaje"
@@ -254,7 +258,6 @@
                   max="100"
                   step="0.1"
                   placeholder="Ej. 97"
-                  required
                 />
               </label>
               <label>Frecuencia cardiaca (lpm)

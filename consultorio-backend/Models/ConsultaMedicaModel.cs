@@ -36,16 +36,16 @@ namespace ConsultorioMedico.API.Models
         public string? Observaciones { get; set; }
 
         [Column(TypeName = "decimal(5,2)")]
-        public decimal PesoKg { get; set; }
+        public decimal? PesoKg { get; set; }
 
         [Column(TypeName = "decimal(5,2)")]
-        public decimal EstaturaCm { get; set; }
+        public decimal? EstaturaCm { get; set; }
 
         [Column(TypeName = "decimal(4,1)")]
         public decimal? TemperaturaC { get; set; }
 
         [Column(TypeName = "decimal(5,2)")]
-        public decimal SaturacionPorcentaje { get; set; }
+        public decimal? SaturacionPorcentaje { get; set; }
 
         public int? FrecuenciaCardiaca { get; set; }
 

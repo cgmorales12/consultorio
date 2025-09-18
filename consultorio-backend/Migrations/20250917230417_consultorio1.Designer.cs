@@ -85,7 +85,7 @@ namespace ConsultorioMedico.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
 
-                    b.Property<decimal>("EstaturaCm")
+                    b.Property<decimal?>("EstaturaCm")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime>("FechaConsulta")
@@ -116,7 +116,7 @@ namespace ConsultorioMedico.Migrations
                     b.Property<decimal?>("PerimetroCefalicoCm")
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<decimal>("PesoKg")
+                    b.Property<decimal?>("PesoKg")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<int?>("PresionDiastolica")
@@ -125,7 +125,7 @@ namespace ConsultorioMedico.Migrations
                     b.Property<int?>("PresionSistolica")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("SaturacionPorcentaje")
+                    b.Property<decimal?>("SaturacionPorcentaje")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("Sintomas")
