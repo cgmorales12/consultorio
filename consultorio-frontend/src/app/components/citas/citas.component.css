@@ -163,13 +163,8 @@
   color: #32405a;
 }
 
-.horario-general__campos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.horario-general__campos label {
+.horario-general__grupo label,
+.horario-feriado__campos label {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -178,8 +173,8 @@
   font-size: 0.85rem;
 }
 
-.horario-general__campos select,
-.horario-general__campos input {
+.horario-general__grupo input,
+.horario-feriado__campos input {
   border: 1px solid rgba(76, 90, 164, 0.2);
   border-radius: 10px;
   padding: 0.45rem 0.65rem;
@@ -189,11 +184,51 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.horario-general__campos select:focus,
-.horario-general__campos input:focus {
+.horario-general__detalle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #4b5aa6;
+  font-weight: 600;
+}
+
+.horario-general__grupo input:focus,
+.horario-feriado__campos input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+.horario-feriado {
+  background: #fef9f2;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  border: 1px dashed rgba(255, 158, 67, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.horario-feriado h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #cc7722;
+}
+
+.horario-feriado p {
+  margin: 0;
+  color: #a86c2c;
+  font-size: 0.85rem;
+}
+
+.horario-feriado__campos {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.horario-feriado small {
+  color: #a86c2c;
+  font-size: 0.8rem;
 }
 
 .horario-general__resumen {

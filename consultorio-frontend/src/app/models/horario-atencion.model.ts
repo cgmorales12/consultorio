@@ -1,16 +1,16 @@
 export interface HorarioAtencion {
   horarioAtencionId: number;
-  diaInicio: number;
-  horaInicio: string;
-  diaFin: number;
-  horaFin: string;
+  inicioAtencion: string;
+  finAtencion: string;
+  inicioFeriado?: string | null;
+  finFeriado?: string | null;
 }
 
 export interface HorarioAtencionPayload {
-  diaInicio: number;
-  horaInicio: string;
-  diaFin: number;
-  horaFin: string;
+  inicioAtencion: string;
+  finAtencion: string;
+  inicioFeriado?: string | null;
+  finFeriado?: string | null;
 }
 
 export interface ActualizarHorarioRequest {

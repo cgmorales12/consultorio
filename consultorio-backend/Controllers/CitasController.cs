@@ -118,9 +118,13 @@ namespace ConsultorioMedico.API.Controllers
             var horarioGeneral = await ObtenerHorarioConfigurado();
             var horasJornada = 0.0;
 
-            if (horarioGeneral != null && DiaDentroDelHorario(horarioGeneral, fecha.DayOfWeek))
+            if (horarioGeneral != null)
             {
-                horasJornada = Math.Max(0, (horarioGeneral.HoraFin - horarioGeneral.HoraInicio).TotalHours);
+                var rangoDia = ObtenerRangoDia(horarioGeneral, fecha);
+                if (rangoDia.HasValue)
+                {
+                    horasJornada = Math.Max(0, (rangoDia.Value.Fin - rangoDia.Value.Inicio).TotalHours);
+                }
             }
 
             var horasDisponibles = Math.Max(0, horasJornada - horasOcupadas);
@@ -313,23 +317,75 @@ namespace ConsultorioMedico.API.Controllers
             return await _context.HorariosAtencion.FirstOrDefaultAsync();
         }
 
-        private static bool DiaDentroDelHorario(HorarioAtencionModel horario, DayOfWeek dia)
+        private static (TimeSpan Inicio, TimeSpan Fin)? ObtenerRangoDia(HorarioAtencionModel horario, DateTime fecha)
         {
-            var diaInicio = (int)horario.DiaInicio;
-            var diaFin = (int)horario.DiaFin;
-            var diaActual = (int)dia;
+            var dia = fecha.Date;
+            var inicio = horario.InicioAtencion.Date;
+            var fin = horario.FinAtencion.Date;
 
-            return diaActual >= diaInicio && diaActual <= diaFin;
+            if (dia < inicio || dia > fin)
+            {
+                return null;
+            }
+
+            if (EstaDentroDeFeriado(horario, dia))
+            {
+                return null;
+            }
+
+            var inicioDia = horario.InicioAtencion.TimeOfDay;
+            var finDia = horario.FinAtencion.TimeOfDay;
+
+            if (inicio == fin)
+            {
+                if (dia != inicio || finDia <= inicioDia)
+                {
+                    return null;
+                }
+
+                return (inicioDia, finDia);
+            }
+
+            if (dia == inicio)
+            {
+                inicioDia = horario.InicioAtencion.TimeOfDay;
+            }
+
+            if (dia == fin)
+            {
+                finDia = horario.FinAtencion.TimeOfDay;
+            }
+
+            if (finDia <= inicioDia)
+            {
+                return null;
+            }
+
+            return (inicioDia, finDia);
         }
 
-        private static bool EstaDentroDelRango(HorarioAtencionModel horario, DayOfWeek dia, TimeSpan horaInicio, TimeSpan horaFin)
+        private static bool EstaDentroDelRango(HorarioAtencionModel horario, DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin)
         {
-            if (!DiaDentroDelHorario(horario, dia))
+            var rango = ObtenerRangoDia(horario, fecha);
+            if (!rango.HasValue)
             {
                 return false;
             }
 
-            return horaInicio >= horario.HoraInicio && horaFin <= horario.HoraFin;
+            return horaInicio >= rango.Value.Inicio && horaFin <= rango.Value.Fin;
+        }
+
+        private static bool EstaDentroDeFeriado(HorarioAtencionModel horario, DateTime dia)
+        {
+            if (!horario.InicioFeriado.HasValue || !horario.FinFeriado.HasValue)
+            {
+                return false;
+            }
+
+            var inicioFeriado = horario.InicioFeriado.Value.Date;
+            var finFeriado = horario.FinFeriado.Value.Date;
+
+            return dia >= inicioFeriado && dia <= finFeriado;
         }
 
         private async Task<bool> ExisteConflictoHorario(DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, int? excluirId)
@@ -370,7 +426,7 @@ namespace ConsultorioMedico.API.Controllers
                 return BadRequest(new { message = "No hay un horario de atención configurado." });
             }
 
-            if (!EstaDentroDelRango(horario, fecha.DayOfWeek, horaInicio, horaFin))
+            if (!EstaDentroDelRango(horario, fecha, horaInicio, horaFin))
             {
                 return BadRequest(new { message = "La cita debe estar dentro del horario de atención configurado." });
             }

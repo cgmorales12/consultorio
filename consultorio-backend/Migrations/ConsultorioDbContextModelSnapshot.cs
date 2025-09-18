@@ -194,17 +194,17 @@ namespace ConsultorioMedico.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("HorarioAtencionId"));
 
-                    b.Property<int>("DiaFin")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("FinAtencion")
+                        .HasColumnType("datetime");
 
-                    b.Property<int>("DiaInicio")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("FinFeriado")
+                        .HasColumnType("datetime");
 
-                    b.Property<TimeSpan>("HoraFin")
-                        .HasColumnType("time");
+                    b.Property<DateTime>("InicioAtencion")
+                        .HasColumnType("datetime");
 
-                    b.Property<TimeSpan>("HoraInicio")
-                        .HasColumnType("time");
+                    b.Property<DateTime?>("InicioFeriado")
+                        .HasColumnType("datetime");
 
                     b.HasKey("HorarioAtencionId");
 

@@ -44,34 +44,46 @@
       <div class="horario-general">
         <div class="horario-general__grupo">
           <h4>Inicio de atención</h4>
-          <div class="horario-general__campos">
-            <label>
-              Día
-              <select formControlName="diaInicio">
-                <option *ngFor="let dia of diasSemana" [value]="dia.value">{{ dia.label }}</option>
-              </select>
-            </label>
-            <label>
-              Hora
-              <input type="time" formControlName="horaInicio" step="1800">
-            </label>
-          </div>
+          <label>
+            Fecha y hora
+            <input type="datetime-local" formControlName="inicioAtencion" step="1800">
+          </label>
+          <p class="horario-general__detalle" *ngIf="inicioAtencionDetalle">
+            {{ inicioAtencionDetalle }}
+          </p>
         </div>
         <div class="horario-general__grupo">
           <h4>Fin de atención</h4>
-          <div class="horario-general__campos">
-            <label>
-              Día
-              <select formControlName="diaFin">
-                <option *ngFor="let dia of diasSemana" [value]="dia.value">{{ dia.label }}</option>
-              </select>
-            </label>
-            <label>
-              Hora
-              <input type="time" formControlName="horaFin" step="1800">
-            </label>
-          </div>
+          <label>
+            Fecha y hora
+            <input type="datetime-local" formControlName="finAtencion" step="1800">
+          </label>
+          <p class="horario-general__detalle" *ngIf="finAtencionDetalle">
+            {{ finAtencionDetalle }}
+          </p>
         </div>
+      </div>
+
+      <div class="horario-feriado">
+        <h4>Feriado</h4>
+        <p>Indica el periodo sin atención por feriado si aplica.</p>
+        <div class="horario-feriado__campos">
+          <label>
+            Inicio feriado
+            <input type="datetime-local" formControlName="inicioFeriado" step="1800">
+          </label>
+          <p class="horario-general__detalle" *ngIf="inicioFeriadoDetalle">
+            {{ inicioFeriadoDetalle }}
+          </p>
+          <label>
+            Fin feriado
+            <input type="datetime-local" formControlName="finFeriado" step="1800">
+          </label>
+          <p class="horario-general__detalle" *ngIf="finFeriadoDetalle">
+            {{ finFeriadoDetalle }}
+          </p>
+        </div>
+        <small>Deja ambos campos vacíos si no hay feriados programados.</small>
       </div>
 
       <p class="horario-general__resumen" *ngIf="horarioResumen">{{ horarioResumen }}</p>

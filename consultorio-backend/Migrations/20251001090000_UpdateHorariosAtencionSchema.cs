@@ -21,10 +21,10 @@ namespace ConsultorioMedico.Migrations
                 {
                     HorarioAtencionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    DiaInicio = table.Column<int>(type: "int", nullable: false),
-                    HoraInicio = table.Column<TimeSpan>(type: "time", nullable: false),
-                    DiaFin = table.Column<int>(type: "int", nullable: false),
-                    HoraFin = table.Column<TimeSpan>(type: "time", nullable: false)
+                    InicioAtencion = table.Column<DateTime>(type: "datetime", nullable: false),
+                    FinAtencion = table.Column<DateTime>(type: "datetime", nullable: false),
+                    InicioFeriado = table.Column<DateTime>(type: "datetime", nullable: true),
+                    FinFeriado = table.Column<DateTime>(type: "datetime", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -45,9 +45,9 @@ namespace ConsultorioMedico.Migrations
                 {
                     HorarioAtencionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Activo = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    DiaSemana = table.Column<int>(type: "int", nullable: false),
+                    DiaInicio = table.Column<int>(type: "int", nullable: false),
                     HoraInicio = table.Column<TimeSpan>(type: "time", nullable: false),
+                    DiaFin = table.Column<int>(type: "int", nullable: false),
                     HoraFin = table.Column<TimeSpan>(type: "time", nullable: false)
                 },
                 constraints: table =>

@@ -122,12 +122,13 @@ try
 
         if (!context.HorariosAtencion.Any())
         {
+            var inicioAtencion = DateTime.Today.AddHours(8);
+            var finAtencion = DateTime.Today.AddMonths(1).Date.AddHours(17);
+
             var horario = new HorarioAtencionModel
             {
-                DiaInicio = DayOfWeek.Monday,
-                HoraInicio = new TimeSpan(8, 0, 0),
-                DiaFin = DayOfWeek.Friday,
-                HoraFin = new TimeSpan(17, 30, 0)
+                InicioAtencion = DateTime.SpecifyKind(inicioAtencion, DateTimeKind.Unspecified),
+                FinAtencion = DateTime.SpecifyKind(finAtencion, DateTimeKind.Unspecified)
             };
 
             context.HorariosAtencion.Add(horario);

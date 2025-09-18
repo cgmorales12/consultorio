@@ -1,3 +1,4 @@
+using System;
 using ConsultorioMedico.API.Data;
 using ConsultorioMedico.API.Models;
 using ConsultorioMedico.API.Models.Dtos;
@@ -57,10 +58,10 @@ namespace ConsultorioMedico.API.Controllers
                 }
                 else
                 {
-                    existente.DiaInicio = horarioModel.DiaInicio;
-                    existente.HoraInicio = horarioModel.HoraInicio;
-                    existente.DiaFin = horarioModel.DiaFin;
-                    existente.HoraFin = horarioModel.HoraFin;
+                    existente.InicioAtencion = horarioModel.InicioAtencion;
+                    existente.FinAtencion = horarioModel.FinAtencion;
+                    existente.InicioFeriado = horarioModel.InicioFeriado;
+                    existente.FinFeriado = horarioModel.FinFeriado;
                     _context.HorariosAtencion.Update(existente);
                 }
 
@@ -81,10 +82,10 @@ namespace ConsultorioMedico.API.Controllers
             return new HorarioAtencionDto
             {
                 HorarioAtencionId = horario.HorarioAtencionId,
-                DiaInicio = (int)horario.DiaInicio,
-                HoraInicio = FormatearHora(horario.HoraInicio),
-                DiaFin = (int)horario.DiaFin,
-                HoraFin = FormatearHora(horario.HoraFin)
+                InicioAtencion = horario.InicioAtencion,
+                FinAtencion = horario.FinAtencion,
+                InicioFeriado = horario.InicioFeriado,
+                FinFeriado = horario.FinFeriado
             };
         }
 
@@ -92,72 +93,61 @@ namespace ConsultorioMedico.API.Controllers
         {
             error = null;
 
-            if (payload.DiaInicio < 0 || payload.DiaInicio > 6)
+            var inicioAtencion = NormalizarFecha(payload.InicioAtencion);
+            var finAtencion = NormalizarFecha(payload.FinAtencion);
+
+            if (finAtencion <= inicioAtencion)
             {
-                error = "El día de inicio es inválido.";
+                error = "La fecha de fin debe ser posterior a la fecha de inicio.";
                 return new HorarioAtencionModel();
             }
 
-            if (payload.DiaFin < 0 || payload.DiaFin > 6)
-            {
-                error = "El día de fin es inválido.";
-                return new HorarioAtencionModel();
-            }
-
-            if (payload.DiaFin < payload.DiaInicio)
-            {
-                error = "El día de fin debe ser mayor o igual al día de inicio.";
-                return new HorarioAtencionModel();
-            }
-
-            TimeSpan horaInicio;
-            TimeSpan horaFin;
-
-            try
-            {
-                horaInicio = ParseTime(payload.HoraInicio);
-                horaFin = ParseTime(payload.HoraFin);
-            }
-            catch (FormatException ex)
-            {
-                error = ex.Message;
-                return new HorarioAtencionModel();
-            }
-
-            if (!EsMultiploDeTreinta(horaInicio) || !EsMultiploDeTreinta(horaFin))
+            if (!EsMultiploDeTreinta(inicioAtencion.TimeOfDay) || !EsMultiploDeTreinta(finAtencion.TimeOfDay))
             {
                 error = "Las horas deben configurarse en intervalos de 30 minutos.";
                 return new HorarioAtencionModel();
             }
 
-            if (horaFin <= horaInicio)
+            DateTime? inicioFeriado = null;
+            DateTime? finFeriado = null;
+
+            if (payload.InicioFeriado.HasValue || payload.FinFeriado.HasValue)
             {
-                error = "La hora de fin debe ser mayor a la hora de inicio.";
-                return new HorarioAtencionModel();
+                if (!payload.InicioFeriado.HasValue || !payload.FinFeriado.HasValue)
+                {
+                    error = "Para configurar un feriado debes indicar fecha de inicio y fin.";
+                    return new HorarioAtencionModel();
+                }
+
+                inicioFeriado = NormalizarFecha(payload.InicioFeriado.Value);
+                finFeriado = NormalizarFecha(payload.FinFeriado.Value);
+
+                if (finFeriado <= inicioFeriado)
+                {
+                    error = "La fecha de fin del feriado debe ser posterior a la de inicio.";
+                    return new HorarioAtencionModel();
+                }
+
+                if (inicioFeriado < inicioAtencion || finFeriado > finAtencion)
+                {
+                    error = "El rango de feriado debe estar comprendido dentro del horario de atención.";
+                    return new HorarioAtencionModel();
+                }
+
+                if (!EsMultiploDeTreinta(inicioFeriado.Value.TimeOfDay) || !EsMultiploDeTreinta(finFeriado.Value.TimeOfDay))
+                {
+                    error = "Los horarios de feriado deben configurarse en intervalos de 30 minutos.";
+                    return new HorarioAtencionModel();
+                }
             }
 
             return new HorarioAtencionModel
             {
-                DiaInicio = (DayOfWeek)payload.DiaInicio,
-                HoraInicio = horaInicio,
-                DiaFin = (DayOfWeek)payload.DiaFin,
-                HoraFin = horaFin
+                InicioAtencion = inicioAtencion,
+                FinAtencion = finAtencion,
+                InicioFeriado = inicioFeriado,
+                FinFeriado = finFeriado
             };
-        }
-
-        private static TimeSpan ParseTime(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return TimeSpan.Zero;
-            }
-
-            if (TimeSpan.TryParse(value, out var resultado))
-            {
-                return resultado;
-            }
-
-            throw new FormatException($"No se pudo interpretar la hora '{value}'.");
         }
 
         private static bool EsMultiploDeTreinta(TimeSpan time)
@@ -165,9 +155,14 @@ namespace ConsultorioMedico.API.Controllers
             return time.TotalMinutes % 30 == 0;
         }
 
-        private static string FormatearHora(TimeSpan hora)
+        private static DateTime NormalizarFecha(DateTime fecha)
         {
-            return new DateTime(hora.Ticks).ToString("HH:mm");
+            if (fecha.Kind == DateTimeKind.Unspecified)
+            {
+                return fecha;
+            }
+
+            return DateTime.SpecifyKind(fecha, DateTimeKind.Unspecified);
         }
     }
 }

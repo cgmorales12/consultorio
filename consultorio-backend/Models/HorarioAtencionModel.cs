@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace ConsultorioMedico.API.Models
@@ -8,15 +9,13 @@ namespace ConsultorioMedico.API.Models
         public int HorarioAtencionId { get; set; }
 
         [Required]
-        public DayOfWeek DiaInicio { get; set; }
+        public DateTime InicioAtencion { get; set; }
 
         [Required]
-        public TimeSpan HoraInicio { get; set; }
+        public DateTime FinAtencion { get; set; }
 
-        [Required]
-        public DayOfWeek DiaFin { get; set; }
+        public DateTime? InicioFeriado { get; set; }
 
-        [Required]
-        public TimeSpan HoraFin { get; set; }
+        public DateTime? FinFeriado { get; set; }
     }
 }

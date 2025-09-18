@@ -1,15 +1,17 @@
+using System;
+
 namespace ConsultorioMedico.API.Models.Dtos
 {
     public class HorarioAtencionDto
     {
         public int HorarioAtencionId { get; set; }
 
-        public int DiaInicio { get; set; }
+        public DateTime InicioAtencion { get; set; }
 
-        public string HoraInicio { get; set; } = string.Empty;
+        public DateTime FinAtencion { get; set; }
 
-        public int DiaFin { get; set; }
+        public DateTime? InicioFeriado { get; set; }
 
-        public string HoraFin { get; set; } = string.Empty;
+        public DateTime? FinFeriado { get; set; }
     }
 }
