@@ -60,9 +60,12 @@ export class HistoriasClinicasComponent implements OnInit {
       pesoKg: [null, [Validators.required, Validators.min(1)]],
       estaturaCm: [null, [Validators.required, Validators.min(40)]],
       temperaturaC: [null],
+      saturacionPorcentaje: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
       frecuenciaCardiaca: [null],
       presionSistolica: [null],
-      presionDiastolica: [null]
+      presionDiastolica: [null],
+      perimetroCefalicoCm: [null],
+      pancita: ['']
     });
   }
 
@@ -226,9 +229,12 @@ export class HistoriasClinicasComponent implements OnInit {
       pesoKg: null,
       estaturaCm: null,
       temperaturaC: null,
+      saturacionPorcentaje: null,
       frecuenciaCardiaca: null,
       presionSistolica: null,
-      presionDiastolica: null
+      presionDiastolica: null,
+      perimetroCefalicoCm: null,
+      pancita: ''
     });
   }
 
@@ -278,9 +284,12 @@ export class HistoriasClinicasComponent implements OnInit {
       pesoKg: Number(valores.pesoKg),
       estaturaCm: Number(valores.estaturaCm),
       temperaturaC: valores.temperaturaC !== null && valores.temperaturaC !== undefined ? Number(valores.temperaturaC) : undefined,
+      saturacionPorcentaje: Number(valores.saturacionPorcentaje),
       frecuenciaCardiaca: valores.frecuenciaCardiaca !== null && valores.frecuenciaCardiaca !== undefined ? Number(valores.frecuenciaCardiaca) : undefined,
       presionSistolica: valores.presionSistolica !== null && valores.presionSistolica !== undefined ? Number(valores.presionSistolica) : undefined,
-      presionDiastolica: valores.presionDiastolica !== null && valores.presionDiastolica !== undefined ? Number(valores.presionDiastolica) : undefined
+      presionDiastolica: valores.presionDiastolica !== null && valores.presionDiastolica !== undefined ? Number(valores.presionDiastolica) : undefined,
+      perimetroCefalicoCm: valores.perimetroCefalicoCm !== null && valores.perimetroCefalicoCm !== undefined ? Number(valores.perimetroCefalicoCm) : undefined,
+      pancita: valores.pancita && valores.pancita.trim().length > 0 ? valores.pancita.trim() : undefined
     };
 
     this.guardandoConsulta = true;
@@ -305,9 +314,12 @@ export class HistoriasClinicasComponent implements OnInit {
             pesoKg: null,
             estaturaCm: null,
             temperaturaC: null,
+            saturacionPorcentaje: null,
             frecuenciaCardiaca: null,
             presionSistolica: null,
-            presionDiastolica: null
+            presionDiastolica: null,
+            perimetroCefalicoCm: null,
+            pancita: ''
           });
         },
         error: (error) => {
@@ -386,6 +398,7 @@ export class HistoriasClinicasComponent implements OnInit {
     const tratamiento = this.consultaForm.get('tratamiento');
     const pesoKg = this.consultaForm.get('pesoKg');
     const estaturaCm = this.consultaForm.get('estaturaCm');
+    const saturacionPorcentaje = this.consultaForm.get('saturacionPorcentaje');
 
     if (fechaConsulta?.hasError('required')) {
       mensajes.push('La fecha de la consulta es obligatoria. Selecciona una fecha válida.');
@@ -417,6 +430,12 @@ export class HistoriasClinicasComponent implements OnInit {
       mensajes.push('Ingresa la estatura del paciente en centímetros. Usa números con punto decimal, por ejemplo 165.5.');
     } else if (estaturaCm?.hasError('min')) {
       mensajes.push('La estatura debe ser mayor a 40 cm para calcular el IMC correctamente.');
+    }
+
+    if (saturacionPorcentaje?.hasError('required')) {
+      mensajes.push('La saturación de oxígeno es obligatoria. Ingresa el porcentaje entre 0 y 100.');
+    } else if (saturacionPorcentaje?.hasError('min') || saturacionPorcentaje?.hasError('max')) {
+      mensajes.push('La saturación de oxígeno debe estar en un rango de 0 a 100%.');
     }
 
     if (mensajes.length > 0) {

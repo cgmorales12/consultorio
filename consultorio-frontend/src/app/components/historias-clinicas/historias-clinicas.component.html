@@ -162,8 +162,11 @@
                   <li><i class="fas fa-weight"></i> {{ consulta.pesoKg }} kg</li>
                   <li><i class="fas fa-ruler"></i> {{ consulta.estaturaCm }} cm</li>
                   <li><i class="fas fa-heartbeat"></i> {{ consulta.presionSistolica || '—' }}/{{ consulta.presionDiastolica || '—' }} mmHg</li>
+                  <li><i class="fas fa-tint"></i> {{ consulta.saturacionPorcentaje ?? '—' }} %</li>
                   <li><i class="fas fa-pulse"></i> {{ consulta.frecuenciaCardiaca || '—' }} lpm</li>
                   <li><i class="fas fa-temperature-high"></i> {{ consulta.temperaturaC ?? '—' }} °C</li>
+                  <li><i class="fas fa-circle"></i> {{ consulta.perimetroCefalicoCm ?? '—' }} cm (PC)</li>
+                  <li><i class="fas fa-apple-alt"></i> {{ consulta.pancita || '—' }}</li>
                 </ul>
               </div>
               <div class="detalle-col imc">
@@ -242,6 +245,18 @@
               <label>Temperatura (°C)
                 <input type="number" formControlName="temperaturaC" step="0.1" />
               </label>
+              <label class="required-field">
+                <span class="label-title">Saturación (%) <span class="required-asterisk">*</span></span>
+                <input
+                  type="number"
+                  formControlName="saturacionPorcentaje"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  placeholder="Ej. 97"
+                  required
+                />
+              </label>
               <label>Frecuencia cardiaca (lpm)
                 <input type="number" formControlName="frecuenciaCardiaca" />
               </label>
@@ -250,6 +265,12 @@
               </label>
               <label>Presión diastólica
                 <input type="number" formControlName="presionDiastolica" />
+              </label>
+              <label>Perímetro cefálico (cm)
+                <input type="number" formControlName="perimetroCefalicoCm" step="0.1" placeholder="Ej. 52" />
+              </label>
+              <label>Pancita
+                <input type="text" formControlName="pancita" placeholder="Ej. Blanda, no dolor" />
               </label>
             </div>
 

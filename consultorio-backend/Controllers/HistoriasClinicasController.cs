@@ -151,9 +151,12 @@ namespace ConsultorioMedico.API.Controllers
                 PesoKg = payload.PesoKg,
                 EstaturaCm = payload.EstaturaCm,
                 TemperaturaC = payload.TemperaturaC,
+                SaturacionPorcentaje = payload.SaturacionPorcentaje ?? 0m,
                 FrecuenciaCardiaca = payload.FrecuenciaCardiaca,
                 PresionSistolica = payload.PresionSistolica,
-                PresionDiastolica = payload.PresionDiastolica
+                PresionDiastolica = payload.PresionDiastolica,
+                PerimetroCefalicoCm = payload.PerimetroCefalicoCm,
+                Pancita = string.IsNullOrWhiteSpace(payload.Pancita) ? null : payload.Pancita.Trim()
             };
 
             ActualizarParametrosClinicos(consulta);
@@ -211,9 +214,12 @@ namespace ConsultorioMedico.API.Controllers
             consulta.PesoKg = payload.PesoKg;
             consulta.EstaturaCm = payload.EstaturaCm;
             consulta.TemperaturaC = payload.TemperaturaC;
+            consulta.SaturacionPorcentaje = payload.SaturacionPorcentaje ?? 0m;
             consulta.FrecuenciaCardiaca = payload.FrecuenciaCardiaca;
             consulta.PresionSistolica = payload.PresionSistolica;
             consulta.PresionDiastolica = payload.PresionDiastolica;
+            consulta.PerimetroCefalicoCm = payload.PerimetroCefalicoCm;
+            consulta.Pancita = string.IsNullOrWhiteSpace(payload.Pancita) ? null : payload.Pancita.Trim();
 
             ActualizarParametrosClinicos(consulta);
 
@@ -284,9 +290,12 @@ namespace ConsultorioMedico.API.Controllers
                 PesoKg = consulta.PesoKg,
                 EstaturaCm = consulta.EstaturaCm,
                 TemperaturaC = consulta.TemperaturaC,
+                SaturacionPorcentaje = consulta.SaturacionPorcentaje,
                 FrecuenciaCardiaca = consulta.FrecuenciaCardiaca,
                 PresionSistolica = consulta.PresionSistolica,
                 PresionDiastolica = consulta.PresionDiastolica,
+                PerimetroCefalicoCm = consulta.PerimetroCefalicoCm,
+                Pancita = consulta.Pancita,
                 Imc = consulta.Imc,
                 ClasificacionImc = consulta.ClasificacionImc ?? string.Empty,
                 Alertas = GenerarAlertasClinicas(consulta)
@@ -363,6 +372,11 @@ namespace ConsultorioMedico.API.Controllers
             if (consulta.TemperaturaC.HasValue && consulta.TemperaturaC.Value >= 38m)
             {
                 alertas.Add($"Fiebre detectada ({consulta.TemperaturaC.Value} °C).");
+            }
+
+            if (consulta.SaturacionPorcentaje < 92m)
+            {
+                alertas.Add($"Saturación de oxígeno baja ({consulta.SaturacionPorcentaje}%).");
             }
 
             if (consulta.FrecuenciaCardiaca.HasValue && (consulta.FrecuenciaCardiaca.Value < 60 || consulta.FrecuenciaCardiaca.Value > 100))

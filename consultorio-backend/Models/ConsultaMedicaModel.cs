@@ -44,11 +44,20 @@ namespace ConsultorioMedico.API.Models
         [Column(TypeName = "decimal(4,1)")]
         public decimal? TemperaturaC { get; set; }
 
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal SaturacionPorcentaje { get; set; }
+
         public int? FrecuenciaCardiaca { get; set; }
 
         public int? PresionSistolica { get; set; }
 
         public int? PresionDiastolica { get; set; }
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal? PerimetroCefalicoCm { get; set; }
+
+        [StringLength(200)]
+        public string? Pancita { get; set; }
 
         [Column(TypeName = "decimal(5,2)")]
         public decimal? Imc { get; set; }

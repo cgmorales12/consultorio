@@ -24,11 +24,17 @@ namespace ConsultorioMedico.API.Models.Dtos
 
         public decimal? TemperaturaC { get; set; }
 
+        public decimal SaturacionPorcentaje { get; set; }
+
         public int? FrecuenciaCardiaca { get; set; }
 
         public int? PresionSistolica { get; set; }
 
         public int? PresionDiastolica { get; set; }
+
+        public decimal? PerimetroCefalicoCm { get; set; }
+
+        public string? Pancita { get; set; }
 
         public decimal? Imc { get; set; }
 

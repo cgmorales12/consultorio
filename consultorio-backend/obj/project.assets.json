@@ -3420,11 +3420,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\CMG\\Downloads\\consultorio-codex-fix-save-button-error\\consultorio-codex-fix-save-button-error\\consultorio-backend\\ConsultorioMedico.csproj",
+      "projectUniqueName": "C:\\Users\\CMG\\Downloads\\consultorio-codex-add-fields-to-physical-exam-form\\consultorio-codex-add-fields-to-physical-exam-form\\consultorio-backend\\ConsultorioMedico.csproj",
       "projectName": "ConsultorioMedico",
-      "projectPath": "C:\\Users\\CMG\\Downloads\\consultorio-codex-fix-save-button-error\\consultorio-codex-fix-save-button-error\\consultorio-backend\\ConsultorioMedico.csproj",
+      "projectPath": "C:\\Users\\CMG\\Downloads\\consultorio-codex-add-fields-to-physical-exam-form\\consultorio-codex-add-fields-to-physical-exam-form\\consultorio-backend\\ConsultorioMedico.csproj",
       "packagesPath": "C:\\Users\\CMG\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\CMG\\Downloads\\consultorio-codex-fix-save-button-error\\consultorio-codex-fix-save-button-error\\consultorio-backend\\obj\\",
+      "outputPath": "C:\\Users\\CMG\\Downloads\\consultorio-codex-add-fields-to-physical-exam-form\\consultorio-codex-add-fields-to-physical-exam-form\\consultorio-backend\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

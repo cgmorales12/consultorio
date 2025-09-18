@@ -34,10 +34,19 @@ namespace ConsultorioMedico.API.Models.Requests
 
         public decimal? TemperaturaC { get; set; }
 
+        [Required]
+        [Range(0, 100)]
+        public decimal? SaturacionPorcentaje { get; set; }
+
         public int? FrecuenciaCardiaca { get; set; }
 
         public int? PresionSistolica { get; set; }
 
         public int? PresionDiastolica { get; set; }
+
+        public decimal? PerimetroCefalicoCm { get; set; }
+
+        [StringLength(200)]
+        public string? Pancita { get; set; }
     }
 }

@@ -1265,6 +1265,10 @@
             "format": "double",
             "nullable": true
           },
+          "saturacionPorcentaje": {
+            "type": "number",
+            "format": "double"
+          },
           "frecuenciaCardiaca": {
             "type": "integer",
             "format": "int32",
@@ -1278,6 +1282,15 @@
           "presionDiastolica": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "perimetroCefalicoCm": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pancita": {
+            "type": "string",
             "nullable": true
           },
           "imc": {
@@ -1364,6 +1377,10 @@
             "format": "double",
             "nullable": true
           },
+          "saturacionPorcentaje": {
+            "type": "number",
+            "format": "double"
+          },
           "frecuenciaCardiaca": {
             "type": "integer",
             "format": "int32",
@@ -1377,6 +1394,17 @@
           "presionDiastolica": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "perimetroCefalicoCm": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pancita": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
             "nullable": true
           },
           "imc": {
@@ -1398,6 +1426,7 @@
           "diagnostico",
           "fechaConsulta",
           "motivoConsulta",
+          "saturacionPorcentaje",
           "sintomas",
           "tratamiento"
         ],
@@ -1450,6 +1479,12 @@
             "format": "double",
             "nullable": true
           },
+          "saturacionPorcentaje": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
           "frecuenciaCardiaca": {
             "type": "integer",
             "format": "int32",
@@ -1463,6 +1498,17 @@
           "presionDiastolica": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "perimetroCefalicoCm": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "pancita": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
             "nullable": true
           }
         },

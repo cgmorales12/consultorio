@@ -59,8 +59,11 @@ namespace ConsultorioMedico.API.Data
                 entity.Property(e => e.PesoKg).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.EstaturaCm).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.TemperaturaC).HasColumnType("decimal(4,1)");
+                entity.Property(e => e.SaturacionPorcentaje).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.Imc).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.ClasificacionImc).HasMaxLength(50);
+                entity.Property(e => e.PerimetroCefalicoCm).HasColumnType("decimal(5,2)");
+                entity.Property(e => e.Pancita).HasMaxLength(200);
 
                 entity.HasOne(e => e.HistoriaClinica)
                       .WithMany(h => h.Consultas)

@@ -10,9 +10,12 @@ export interface ConsultaMedica {
   pesoKg: number;
   estaturaCm: number;
   temperaturaC?: number;
+  saturacionPorcentaje: number;
   frecuenciaCardiaca?: number;
   presionSistolica?: number;
   presionDiastolica?: number;
+  perimetroCefalicoCm?: number;
+  pancita?: string;
   imc: number | null;
   clasificacionImc: string;
   alertas: string[];
@@ -66,7 +69,10 @@ export interface ConsultaMedicaPayload {
   pesoKg: number;
   estaturaCm: number;
   temperaturaC?: number;
+  saturacionPorcentaje: number;
   frecuenciaCardiaca?: number;
   presionSistolica?: number;
   presionDiastolica?: number;
+  perimetroCefalicoCm?: number;
+  pancita?: string;
 }
